@@ -19,11 +19,14 @@
 const std::function<std::string(const char*)> G_TRANSLATION_FUN = nullptr;
 UrlDecodeFn* const URL_DECODE = nullptr;
 
+static int g_wallet_init_exit_status = EXIT_FAILURE;
+
 static void SetupWalletToolArgs(ArgsManager& argsman)
 {
     SetupHelpOptions(argsman);
     SetupChainParamsBaseOptions(argsman);
 
+    argsman.AddArg("-version", "Print version and exit", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-datadir=<dir>", "Specify data directory", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-wallet=<wallet-name>", "Specify wallet name", ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::OPTIONS);
     argsman.AddArg("-debug=<category>", "Output debugging information (default: 0).", ArgsManager::ALLOW_ANY, OptionsCategory::DEBUG_TEST);
@@ -42,16 +45,24 @@ static bool WalletAppInit(int argc, char* argv[])
         tfm::format(std::cerr, "Error parsing command line arguments: %s\n", error_message);
         return false;
     }
+
+    if (gArgs.IsArgSet("-version")) {
+        tfm::format(std::cout, "%s defcoin-wallet version %s\n", PACKAGE_NAME, FormatFullVersion());
+        g_wallet_init_exit_status = EXIT_SUCCESS;
+        return false;
+    }
+
     if (argc < 2 || HelpRequested(gArgs)) {
-        std::string usage = strprintf("%s litecoin-wallet version", PACKAGE_NAME) + " " + FormatFullVersion() + "\n\n" +
-                                      "litecoin-wallet is an offline tool for creating and interacting with " PACKAGE_NAME " wallet files.\n" +
-                                      "By default litecoin-wallet will act on wallets in the default mainnet wallet directory in the datadir.\n" +
+        std::string usage = strprintf("%s defcoin-wallet version", PACKAGE_NAME) + " " + FormatFullVersion() + "\n\n" +
+                                      "defcoin-wallet is an offline tool for creating and interacting with " PACKAGE_NAME " wallet files.\n" +
+                                      "By default defcoin-wallet will act on wallets in the default mainnet wallet directory in the datadir.\n" +
                                       "To change the target wallet, use the -datadir, -wallet and -testnet/-regtest arguments.\n\n" +
                                       "Usage:\n" +
-                                     "  litecoin-wallet [options] <command>\n\n" +
+                                     "  defcoin-wallet [options] <command>\n\n" +
                                      gArgs.GetHelpMessage();
 
         tfm::format(std::cout, "%s", usage);
+        g_wallet_init_exit_status = HelpRequested(gArgs) ? EXIT_SUCCESS : EXIT_FAILURE;
         return false;
     }
 
@@ -77,7 +88,7 @@ int main(int argc, char* argv[])
     SetupEnvironment();
     RandomInit();
     try {
-        if (!WalletAppInit(argc, argv)) return EXIT_FAILURE;
+        if (!WalletAppInit(argc, argv)) return g_wallet_init_exit_status;
     } catch (const std::exception& e) {
         PrintExceptionContinue(&e, "WalletAppInit()");
         return EXIT_FAILURE;
@@ -98,7 +109,7 @@ int main(int argc, char* argv[])
     }
 
     if (method.empty()) {
-        tfm::format(std::cerr, "No method provided. Run `litecoin-wallet -help` for valid methods.\n");
+        tfm::format(std::cerr, "No method provided. Run `defcoin-wallet -help` for valid methods.\n");
         return EXIT_FAILURE;
     }
 

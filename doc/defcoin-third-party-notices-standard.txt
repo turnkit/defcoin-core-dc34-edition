@@ -1,0 +1,71 @@
+Defcoin Core Standard Build - License Notices
+=============================================
+
+This standard build contains the Defcoin Core codebase derived from Litecoin
+Core and Bitcoin Core, plus the dependency libraries linked by the build system.
+
+Core software license
+---------------------
+
+The Defcoin Core source modifications are distributed under the MIT software
+license, following the upstream Litecoin Core and Bitcoin Core licensing model.
+
+Copyright (c) 2014-2026 The Defcoin Core developers
+Copyright (c) 2011-2026 The Litecoin Core developers
+Copyright (c) 2009-2026 The Bitcoin Core developers
+
+Primary linked libraries and bundled code
+-----------------------------------------
+
+The standard build uses the same dependency family as the base Litecoin Core
+desktop wallet:
+
+- Qt 5: LGPLv3 / GPLv3 / commercial licensing; linked as the Qt GUI toolkit.
+- Berkeley DB 4.8: Oracle Berkeley DB license; used for legacy wallet storage.
+- SQLite: public domain; used for descriptor wallet database support.
+- Boost: Boost Software License 1.0; used throughout the C++ codebase.
+- OpenSSL/libcrypto: Apache License 2.0; used for cryptographic support from
+  the linked system/dependency library.
+- libevent: BSD-style license; used for network event handling.
+- LevelDB: BSD-style license; used for block index and chainstate storage.
+- secp256k1 and secp256k1-zkp code: MIT license; used for elliptic-curve
+  cryptography and inherited Litecoin MWEB-related code paths.
+- CRC32C: BSD-style license; used by LevelDB-related storage code.
+- Unbound: BSD-style license when built in by the dependency environment; used
+  for DNS resolution support where enabled.
+- QRencode: LGPLv2.1+; used by the GUI to render payment request QR codes.
+- zlib/libpng and related image libraries: zlib/libpng-style licenses; used by
+  Qt and the GUI image pipeline where linked by the build environment.
+
+Standard build assets
+---------------------
+
+The standard build uses Defcoin branding assets and the base wallet icon set
+needed for the normal wallet and node controls. Defcoin-specific icon artwork
+in this tree is provided for this project and is distributed with the Defcoin
+Core build. Upstream Bitcoin/Litecoin-origin icons and UI assets retain their
+upstream MIT-compatible licensing.
+
+DC34 Edition-only assets and features are intentionally not listed here because
+they are not part of the standard package.
+
+MIT license text
+----------------
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

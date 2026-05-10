@@ -2,10 +2,10 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-bin_PROGRAMS += qt/litecoin-qt
+bin_PROGRAMS += qt/defcoin-qt
 
 if BUILD_BITCOIN_GUI
-  bin_PROGRAMS += litecoin-gui
+  bin_PROGRAMS += defcoin-gui
 endif
 
 EXTRA_LIBRARIES += qt/libbitcoinqt.a
@@ -169,7 +169,12 @@ RES_ICONS = \
   qt/res/icons/bitcoin.ico \
   qt/res/icons/bitcoin_testnet.ico \
   qt/res/icons/bitcoin.png \
+  qt/res/icons/defcoin.ico \
+  qt/res/icons/defcoin.icns \
+  qt/res/icons/defcoin.png \
+  qt/res/icons/defcoin_splash.png \
   qt/res/icons/chevron.png \
+  qt/res/icons/dropdown_arrow.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \
   qt/res/icons/clock3.png \
@@ -190,18 +195,32 @@ RES_ICONS = \
   qt/res/icons/fontbigger.png \
   qt/res/icons/fontsmaller.png \
   qt/res/icons/hd_disabled.png \
+  qt/res/icons/hd_disabled.svg \
   qt/res/icons/hd_enabled.png \
+  qt/res/icons/hd_enabled.svg \
   qt/res/icons/history.png \
   qt/res/icons/litecoin_splash.png \
   qt/res/icons/lock_closed.png \
+  qt/res/icons/lock_closed.svg \
   qt/res/icons/lock_open.png \
+  qt/res/icons/lock_open.svg \
+  qt/res/icons/mask_values_hidden.png \
+  qt/res/icons/mask_values_hidden.svg \
+  qt/res/icons/mask_values_visible.png \
+  qt/res/icons/mask_values_visible.svg \
   qt/res/icons/network_disabled.png \
+  qt/res/icons/network_disabled.svg \
+  qt/res/icons/node.png \
   qt/res/icons/overview.png \
   qt/res/icons/proxy.png \
+  qt/res/icons/proxy.svg \
   qt/res/icons/receive.png \
   qt/res/icons/remove.png \
   qt/res/icons/send.png \
+  qt/res/icons/settings.png \
   qt/res/icons/synced.png \
+  qt/res/icons/synced.svg \
+  qt/res/icons/syncing.png \
   qt/res/icons/transaction0.png \
   qt/res/icons/transaction2.png \
   qt/res/icons/transaction_abandoned.png \
@@ -278,6 +297,13 @@ BITCOIN_QT_CPP += $(BITCOIN_QT_WALLET_CPP)
 endif # ENABLE_WALLET
 
 RES_ANIMATION = $(wildcard $(srcdir)/qt/res/animation/spinner-*.png)
+RES_GEO = \
+  qt/res/geo/black_marble_2016_3km.jpg \
+  qt/res/geo/black_marble_2016_global_7km.png \
+  qt/res/geo/black_marble_2016_global_7km_print.jpg \
+  qt/res/geo/blue_marble_200405_3x5400x2700.jpg \
+  qt/res/geo/ne_110m_admin_0_boundary_lines_land.geojson \
+  qt/res/geo/ne_110m_populated_places_simple.geojson
 
 BITCOIN_RC = qt/res/bitcoin-qt-res.rc
 
@@ -289,7 +315,7 @@ qt_libbitcoinqt_a_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
 qt_libbitcoinqt_a_OBJCXXFLAGS = $(AM_OBJCXXFLAGS) $(QT_PIE_FLAGS)
 
 qt_libbitcoinqt_a_SOURCES = $(BITCOIN_QT_CPP) $(BITCOIN_QT_H) $(QT_FORMS_UI) \
-  $(QT_QRC) $(QT_QRC_LOCALE) $(QT_TS) $(RES_ICONS) $(RES_ANIMATION)
+  $(QT_QRC) $(QT_QRC_LOCALE) $(QT_TS) $(RES_ICONS) $(RES_ANIMATION) $(RES_GEO)
 if TARGET_DARWIN
   qt_libbitcoinqt_a_SOURCES += $(BITCOIN_MM)
 endif
@@ -302,43 +328,43 @@ QT_FORMS_H=$(join $(dir $(QT_FORMS_UI)),$(addprefix ui_, $(notdir $(QT_FORMS_UI:
 # Most files will depend on the forms and moc files as includes. Generate them
 # before anything else.
 $(QT_MOC): $(QT_FORMS_H)
-$(qt_libbitcoinqt_a_OBJECTS) $(qt_bitcoin_qt_OBJECTS) $(bitcoin_gui_OBJECTS) : | $(QT_MOC)
+$(qt_libbitcoinqt_a_OBJECTS) $(qt_defcoin_qt_OBJECTS) $(defcoin_gui_OBJECTS) : | $(QT_MOC)
 
-# bitcoin-qt and bitcoin-gui binaries #
-litecoin_qt_cppflags = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(BITCOIN_QT_INCLUDES) \
+# defcoin-qt and defcoin-gui binaries #
+defcoin_qt_cppflags = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(BITCOIN_QT_INCLUDES) \
   $(QT_INCLUDES) $(QR_CFLAGS)
-litecoin_qt_cxxflags = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
+defcoin_qt_cxxflags = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
 
-litecoin_qt_sources = qt/main.cpp
+defcoin_qt_sources = qt/main.cpp
 if TARGET_WINDOWS
-  litecoin_qt_sources += $(BITCOIN_RC)
+  defcoin_qt_sources += $(BITCOIN_RC)
 endif
-litecoin_qt_ldadd = qt/libbitcoinqt.a $(LIBBITCOIN_SERVER)
+defcoin_qt_ldadd = qt/libbitcoinqt.a $(LIBBITCOIN_SERVER)
 if ENABLE_WALLET
-litecoin_qt_ldadd += $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET)
+defcoin_qt_ldadd += $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET)
 endif
 if ENABLE_ZMQ
-litecoin_qt_ldadd += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
+defcoin_qt_ldadd += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
-litecoin_qt_ldadd += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CONSENSUS) $(LIBBITCOIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) \
-  $(LIBMW) $(MWEB_LIBS) $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(BDB_LIBS) $(MINIUPNPC_LIBS) $(LIBSECP256K1) $(CRYPTO_LIBS) \
+defcoin_qt_ldadd += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CONSENSUS) $(LIBBITCOIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) \
+  $(LIBMW) $(MWEB_LIBS) $(BOOST_LIBS) $(QT_LIBS) $(QT_DBUS_LIBS) $(QR_LIBS) $(BDB_LIBS) $(MINIUPNPC_LIBS) $(LIBSECP256K1) $(SSL_LIBS) $(CRYPTO_LIBS) \
   $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(SQLITE_LIBS)
-litecoin_qt_ldflags = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
-litecoin_qt_libtoolflags = $(AM_LIBTOOLFLAGS) --tag CXX
+defcoin_qt_ldflags = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
+defcoin_qt_libtoolflags = $(AM_LIBTOOLFLAGS) --tag CXX
 
-qt_litecoin_qt_CPPFLAGS = $(litecoin_qt_cppflags)
-qt_litecoin_qt_CXXFLAGS = $(litecoin_qt_cxxflags)
-qt_litecoin_qt_SOURCES = $(litecoin_qt_sources)
-qt_litecoin_qt_LDADD = $(litecoin_qt_ldadd)
-qt_litecoin_qt_LDFLAGS = $(litecoin_qt_ldflags)
-qt_litecoin_qt_LIBTOOLFLAGS = $(litecoin_qt_libtoolflags)
+qt_defcoin_qt_CPPFLAGS = $(defcoin_qt_cppflags)
+qt_defcoin_qt_CXXFLAGS = $(defcoin_qt_cxxflags)
+qt_defcoin_qt_SOURCES = $(defcoin_qt_sources)
+qt_defcoin_qt_LDADD = $(defcoin_qt_ldadd)
+qt_defcoin_qt_LDFLAGS = $(defcoin_qt_ldflags)
+qt_defcoin_qt_LIBTOOLFLAGS = $(defcoin_qt_libtoolflags)
 
-litecoin_gui_CPPFLAGS = $(litecoin_qt_cppflags)
-litecoin_gui_CXXFLAGS = $(litecoin_qt_cxxflags)
-litecoin_gui_SOURCES = $(litecoin_qt_sources)
-litecoin_gui_LDADD = $(litecoin_qt_ldadd)
-litecoin_gui_LDFLAGS = $(litecoin_qt_ldflags)
-litecoin_gui_LIBTOOLFLAGS = $(litecoin_qt_libtoolflags)
+defcoin_gui_CPPFLAGS = $(defcoin_qt_cppflags)
+defcoin_gui_CXXFLAGS = $(defcoin_qt_cxxflags)
+defcoin_gui_SOURCES = $(defcoin_qt_sources)
+defcoin_gui_LDADD = $(defcoin_qt_ldadd)
+defcoin_gui_LDFLAGS = $(defcoin_qt_ldflags)
+defcoin_gui_LIBTOOLFLAGS = $(defcoin_qt_libtoolflags)
 
 #locale/foo.ts -> locale/foo.qm
 QT_QM=$(QT_TS:.ts=.qm)
@@ -360,7 +386,7 @@ $(QT_QRC_LOCALE_CPP): $(QT_QRC_LOCALE) $(QT_QM)
 	  $(SED) -e '/^\*\*.*Created:/d' -e '/^\*\*.*by:/d' > $@
 	@rm $(@D)/temp_$(<F)
 
-$(QT_QRC_CPP): $(QT_QRC) $(QT_FORMS_H) $(RES_ICONS) $(RES_ANIMATION)
+$(QT_QRC_CPP): $(QT_QRC) $(QT_FORMS_H) $(RES_ICONS) $(RES_ANIMATION) $(RES_GEO)
 	@test -f $(RCC)
 	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) -name bitcoin $< | \
 	  $(SED) -e '/^\*\*.*Created:/d' -e '/^\*\*.*by:/d' > $@
@@ -370,9 +396,9 @@ CLEAN_QT = $(nodist_qt_libbitcoinqt_a_SOURCES) $(QT_QM) $(QT_FORMS_H) qt/*.gcda 
 CLEANFILES += $(CLEAN_QT)
 
 bitcoin_qt_clean: FORCE
-	rm -f $(CLEAN_QT) $(qt_libbitcoinqt_a_OBJECTS) $(qt_litecoin_qt_OBJECTS) qt/litecoin-qt$(EXEEXT) $(LIBBITCOINQT)
+	rm -f $(CLEAN_QT) $(qt_libbitcoinqt_a_OBJECTS) $(qt_defcoin_qt_OBJECTS) qt/defcoin-qt$(EXEEXT) $(LIBBITCOINQT)
 
-bitcoin_qt : qt/litecoin-qt$(EXEEXT)
+bitcoin_qt : qt/defcoin-qt$(EXEEXT)
 
 ui_%.h: %.ui
 	@test -f $(UIC)

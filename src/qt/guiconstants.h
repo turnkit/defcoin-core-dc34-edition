@@ -14,7 +14,9 @@ static const int MODEL_UPDATE_DELAY = 250;
 static const int MAX_PASSPHRASE_SIZE = 1024;
 
 /* BitcoinGUI -- Size of icons in status bar */
-static const int STATUSBAR_ICONSIZE = 16;
+static const int STATUSBAR_ICONSIZE = 20;
+static const int STATUSBAR_WIDE_ICON_WIDTH = 54;
+static const int STATUSBAR_WIDE_ICON_HEIGHT = 24;
 
 static const bool DEFAULT_SPLASHSCREEN = true;
 
@@ -42,12 +44,12 @@ static const int TOOLTIP_WRAP_THRESHOLD = 80;
 /* Number of frames in spinner animation */
 #define SPINNER_FRAMES 36
 
-#define QAPP_ORG_NAME "Litecoin"
-#define QAPP_ORG_DOMAIN "litecoin.org"
-#define QAPP_APP_NAME_DEFAULT "Litecoin-Qt"
-#define QAPP_APP_NAME_TESTNET "Liteocin-Qt-testnet"
-#define QAPP_APP_NAME_SIGNET "Litecoin-Qt-signet"
-#define QAPP_APP_NAME_REGTEST "Litecoin-Qt-regtest"
+#define QAPP_ORG_NAME "Defcoin"
+#define QAPP_ORG_DOMAIN "defcoin.org"
+#define QAPP_APP_NAME_DEFAULT "Defcoin-Qt"
+#define QAPP_APP_NAME_TESTNET "Defcoin-Qt-testnet"
+#define QAPP_APP_NAME_SIGNET "Defcoin-Qt-signet"
+#define QAPP_APP_NAME_REGTEST "Defcoin-Qt-regtest"
 
 /* One gigabyte (GB) in bytes */
 static constexpr uint64_t GB_BYTES{1000000000};

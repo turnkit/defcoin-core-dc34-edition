@@ -23,6 +23,11 @@ class TxValidationState;
 extern RecursiveMutex cs_main;
 extern RecursiveMutex g_cs_orphans;
 
+void SetOnlyDefcoinUserAgents(bool enabled);
+bool GetOnlyDefcoinUserAgents();
+
+static const bool DEFAULT_DEFCOIN_USER_AGENT_FILTER = true;
+
 /** Default for -maxorphantx, maximum number of orphan transactions kept in memory */
 static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = 100;
 /** Default number of orphan+recently-replaced txn to keep around for block reconstruction */

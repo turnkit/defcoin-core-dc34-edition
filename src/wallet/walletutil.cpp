@@ -7,12 +7,34 @@
 #include <logging.h>
 #include <util/system.h>
 
+#include <boost/version.hpp>
+
 bool ExistsBerkeleyDatabase(const fs::path& path);
 #ifdef USE_SQLITE
 bool ExistsSQLiteDatabase(const fs::path& path);
 #else
 #   define ExistsSQLiteDatabase(path)  (false)
 #endif
+
+namespace {
+int WalletDirIteratorDepth(const fs::recursive_directory_iterator& it)
+{
+#if BOOST_VERSION >= 107200
+    return it.depth();
+#else
+    return it.level();
+#endif
+}
+
+void DisableWalletDirRecursion(fs::recursive_directory_iterator& it)
+{
+#if BOOST_VERSION >= 107200
+    it.disable_recursion_pending();
+#else
+    it.no_push();
+#endif
+}
+} // namespace
 
 fs::path GetWalletDir()
 {
@@ -58,7 +80,7 @@ std::vector<fs::path> ListWalletDir()
                 (ExistsBerkeleyDatabase(it->path()) || ExistsSQLiteDatabase(it->path()))) {
                 // Found a directory which contains wallet.dat btree file, add it as a wallet.
                 paths.emplace_back(path);
-            } else if (it.level() == 0 && it->symlink_status().type() == fs::regular_file && ExistsBerkeleyDatabase(it->path())) {
+            } else if (WalletDirIteratorDepth(it) == 0 && it->symlink_status().type() == fs::regular_file && ExistsBerkeleyDatabase(it->path())) {
                 if (it->path().filename() == "wallet.dat") {
                     // Found top-level wallet.dat btree file, add top level directory ""
                     // as a wallet.
@@ -73,7 +95,7 @@ std::vector<fs::path> ListWalletDir()
             }
         } catch (const std::exception& e) {
             LogPrintf("%s: Error scanning %s: %s\n", __func__, it->path().string(), e.what());
-            it.no_push();
+            DisableWalletDirRecursion(it);
         }
     }
 

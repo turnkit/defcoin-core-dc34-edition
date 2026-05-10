@@ -30,7 +30,7 @@ public:
 
         return TxOutput{std::move(blind_switch), amount, std::move(output)};
     }
-    
+
     static TxOutput Create(
         const SecretKey& sender_privkey,
         const SecretKey& receiver_scan_key,

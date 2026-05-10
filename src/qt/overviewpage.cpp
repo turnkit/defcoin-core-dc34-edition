@@ -18,7 +18,10 @@
 
 #include <QAbstractItemDelegate>
 #include <QApplication>
+#include <QComboBox>
 #include <QPainter>
+#include <QSignalBlocker>
+#include <QSizePolicy>
 #include <QStatusTipEvent>
 
 #include <algorithm>
@@ -28,6 +31,15 @@
 #define NUM_ITEMS 5
 
 Q_DECLARE_METATYPE(interfaces::WalletBalances)
+
+static int fontMetricHorizontalAdvance(const QFontMetrics& metrics, const QString& text)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+    return metrics.horizontalAdvance(text);
+#else
+    return metrics.width(text);
+#endif
+}
 
 class TxViewDelegate : public QAbstractItemDelegate
 {
@@ -53,7 +65,7 @@ public:
         int halfheight = (mainRect.height() - 2*ypad)/2;
         QRect amountRect(mainRect.left() + xspace, mainRect.top()+ypad, mainRect.width() - xspace, halfheight);
         QRect addressRect(mainRect.left() + xspace, mainRect.top()+ypad+halfheight, mainRect.width() - xspace, halfheight);
-        icon = platformStyle->SingleColorIcon(icon);
+        icon = platformStyle->AccentColorIcon(icon);
         icon.paint(painter, decorationRect);
 
         QDateTime date = index.data(TransactionTableModel::DateRole).toDateTime();
@@ -69,9 +81,11 @@ public:
         }
 
         painter->setPen(foreground);
+        const QFontMetrics metrics(option.font);
         QRect boundingRect;
-        painter->drawText(addressRect, Qt::AlignLeft | Qt::AlignVCenter, address, &boundingRect);
-        int address_rect_min_width = boundingRect.width();
+        const QString elided_address = metrics.elidedText(address, Qt::ElideRight, std::max(1, addressRect.width()));
+        painter->drawText(addressRect, Qt::AlignLeft | Qt::AlignVCenter, elided_address, &boundingRect);
+        int address_rect_min_width = fontMetricHorizontalAdvance(metrics, address);
 
         if (index.data(TransactionTableModel::WatchonlyRole).toBool())
         {
@@ -101,13 +115,20 @@ public:
         }
 
         QRect amount_bounding_rect;
-        painter->drawText(amountRect, Qt::AlignRight | Qt::AlignVCenter, amountText, &amount_bounding_rect);
+        const int amount_width = fontMetricHorizontalAdvance(metrics, amountText);
+        const int top_gap = 10;
+        const int amount_draw_width = std::min(amountRect.width(), amount_width + 4);
+        QRect amount_draw_rect(amountRect.right() - amount_draw_width + 1, amountRect.top(), amount_draw_width, amountRect.height());
+        painter->drawText(amount_draw_rect, Qt::AlignRight | Qt::AlignVCenter, amountText, &amount_bounding_rect);
 
         painter->setPen(option.palette.color(QPalette::Text));
         QRect date_bounding_rect;
-        painter->drawText(amountRect, Qt::AlignLeft | Qt::AlignVCenter, GUIUtil::dateTimeStr(date), &date_bounding_rect);
+        const int date_available_width = std::max(1, amountRect.width() - amount_draw_width - top_gap);
+        QRect date_draw_rect(amountRect.left(), amountRect.top(), date_available_width, amountRect.height());
+        const QString date_text = GUIUtil::dateTimeStr(date);
+        painter->drawText(date_draw_rect, Qt::AlignLeft | Qt::AlignVCenter, metrics.elidedText(date_text, Qt::ElideRight, date_available_width), &date_bounding_rect);
 
-        const int minimum_width = std::max(address_rect_min_width, amount_bounding_rect.width() + date_bounding_rect.width());
+        const int minimum_width = std::max(address_rect_min_width, amount_width + fontMetricHorizontalAdvance(metrics, date_text) + top_gap);
         const auto search = m_minimum_width.find(index.row());
         if (search == m_minimum_width.end() || search->second != minimum_width) {
             m_minimum_width[index.row()] = minimum_width;
@@ -162,6 +183,15 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
 
     connect(ui->listTransactions, &TransactionOverviewWidget::clicked, this, &OverviewPage::handleTransactionClicked);
 
+    m_unit_selector = new QComboBox(this);
+    m_unit_selector->setObjectName(QStringLiteral("overviewUnitSelector"));
+    m_unit_selector->setModel(new BitcoinUnits(m_unit_selector));
+    m_unit_selector->setToolTip(tr("Change the unit used to display wallet amounts."));
+    m_unit_selector->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    m_unit_selector->setMinimumHeight(30);
+    GUIUtil::PolishComboBox(m_unit_selector, 92);
+    ui->gridLayout->addWidget(m_unit_selector, 5, 3, 1, 1, Qt::AlignLeft | Qt::AlignVCenter);
+
     // start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
     connect(ui->labelWalletStatus, &QPushButton::clicked, this, &OverviewPage::handleOutOfSyncWarningClicks);
@@ -188,7 +218,7 @@ void OverviewPage::setPrivacy(bool privacy)
 
     ui->listTransactions->setVisible(!m_privacy);
 
-    const QString status_tip = m_privacy ? tr("Privacy mode activated for the Overview tab. To unmask the values, uncheck Settings->Mask values.") : "";
+    const QString status_tip = m_privacy ? tr("Privacy mode activated for the Overview tab. To unmask the values, uncheck Preferences->Mask values.") : "";
     setStatusTip(status_tip);
     QStatusTipEvent event(status_tip);
     QApplication::sendEvent(this, &event);
@@ -284,6 +314,23 @@ void OverviewPage::setWalletModel(WalletModel *model)
         connect(model, &WalletModel::balanceChanged, this, &OverviewPage::setBalance);
 
         connect(model->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &OverviewPage::updateDisplayUnit);
+        connect(model->getOptionsModel(), &OptionsModel::displayUnitChanged, this, [this](int unit) {
+            if (!m_unit_selector) return;
+            const int row = m_unit_selector->findData(unit, BitcoinUnits::UnitRole);
+            if (row >= 0) {
+                const QSignalBlocker blocker(m_unit_selector);
+                m_unit_selector->setCurrentIndex(row);
+            }
+        });
+        if (m_unit_selector) {
+            const int current_unit = model->getOptionsModel()->getDisplayUnit();
+            const int row = m_unit_selector->findData(current_unit, BitcoinUnits::UnitRole);
+            if (row >= 0) m_unit_selector->setCurrentIndex(row);
+            connect(m_unit_selector, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+                if (!walletModel || !walletModel->getOptionsModel() || index < 0) return;
+                walletModel->getOptionsModel()->setDisplayUnit(m_unit_selector->itemData(index, BitcoinUnits::UnitRole));
+            });
+        }
 
         updateWatchOnlyLabels(wallet.haveWatchOnly() && !model->wallet().privateKeysDisabled());
         connect(model, &WalletModel::notifyWatchonlyChanged, [this](bool showWatchOnly) {

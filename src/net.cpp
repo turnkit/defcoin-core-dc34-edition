@@ -78,6 +78,21 @@ static constexpr int DNSSEEDS_TO_QUERY_AT_ONCE = 3;
 static constexpr std::chrono::seconds DNSSEEDS_DELAY_FEW_PEERS{11};
 static constexpr std::chrono::minutes DNSSEEDS_DELAY_MANY_PEERS{5};
 static constexpr int DNSSEEDS_DELAY_PEER_THRESHOLD = 1000; // "many" vs "few" peers
+static constexpr int DEFCOIN_DNSSEED_MIN_OUTBOUND_PEERS = 8;
+static constexpr int DEFCOIN_FIXED_SEED_MIN_OUTBOUND_PEERS = 4;
+static constexpr int DEFCOIN_ALT_PORT = 10332;
+static constexpr int DEFCOIN_PREFERRED_PORT_TRIES = 300;
+static constexpr int DEFCOIN_ADDRMAN_TRIES = 500;
+
+static bool IsDefcoinMainnet()
+{
+    return Params().NetworkIDString() == CBaseChainParams::MAIN;
+}
+
+static bool IsDefcoinPreferredPort(uint16_t port)
+{
+    return port == Params().GetDefaultPort() || port == DEFCOIN_ALT_PORT;
+}
 
 // We add a random period time (0 to 1 seconds) to feeler connections to prevent synchronization.
 #define FEELER_SLEEP_WINDOW 1
@@ -161,7 +176,7 @@ bool GetLocal(CService& addr, const CNetAddr *paddrPeer)
 }
 
 //! Convert the serialized seeds into usable address objects.
-static std::vector<CAddress> ConvertSeeds(const std::vector<uint8_t>& vSeedsIn)
+static std::vector<CAddress> ConvertSeeds(const std::vector<uint8_t>& vSeedsIn, bool log = true)
 {
     // It'll only connect to one or two seed nodes because once it connects,
     // it'll get a pile of addresses with newer timestamps.
@@ -176,7 +191,7 @@ static std::vector<CAddress> ConvertSeeds(const std::vector<uint8_t>& vSeedsIn)
         s >> endpoint;
         CAddress addr{endpoint, GetDesirableServiceFlags(NODE_NONE)};
         addr.nTime = GetTime() - rng.randrange(nOneWeek) - nOneWeek;
-        LogPrint(BCLog::NET, "Added hardcoded seed: %s\n", addr.ToString());
+        if (log) LogPrint(BCLog::NET, "Added hardcoded seed: %s\n", addr.ToString());
         vSeedsOut.push_back(addr);
     }
     return vSeedsOut;
@@ -1640,7 +1655,12 @@ static void ThreadMapPort()
     struct IGDdatas data;
     int r;
 
+#if MINIUPNPC_API_VERSION >= 18
+    char wanaddr[40] = "";
+    r = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr), wanaddr, sizeof(wanaddr));
+#else
     r = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
+#endif
     if (r == 1)
     {
         if (fDiscover) {
@@ -1782,7 +1802,8 @@ void CConnman::ThreadDNSAddressSeed()
                             if (pnode->fSuccessfullyConnected && pnode->IsOutboundOrBlockRelayConn()) ++nRelevant;
                         }
                     }
-                    if (nRelevant >= 2) {
+                    const int min_seed_peers = IsDefcoinMainnet() ? DEFCOIN_DNSSEED_MIN_OUTBOUND_PEERS : 2;
+                    if (nRelevant >= min_seed_peers) {
                         if (found > 0) {
                             LogPrintf("%d addresses found from DNS seeds\n", found);
                             LogPrintf("P2P peers available. Finished DNS seeding.\n");
@@ -1810,19 +1831,43 @@ void CConnman::ThreadDNSAddressSeed()
             AddAddrFetch(seed);
         } else {
             std::vector<CNetAddr> vIPs;
+            std::vector<CService> vServices;
             std::vector<CAddress> vAdd;
             ServiceFlags requiredServiceBits = GetDesirableServiceFlags(NODE_NONE);
-            std::string host = strprintf("x%x.%s", requiredServiceBits, seed);
+            int seed_port = 0;
+            std::string seed_host;
+            SplitHostPort(seed, seed_port, seed_host);
+            if (seed_host.empty()) seed_host = seed;
+            const bool explicit_seed_port = seed_port > 0;
+            std::string host = explicit_seed_port ? seed_host : strprintf("x%x.%s", requiredServiceBits, seed);
             CNetAddr resolveSource;
             if (!resolveSource.SetInternal(host)) {
                 continue;
             }
             unsigned int nMaxIPs = 256; // Limits number of IPs learned from a DNS seed
-            if (LookupHost(host, vIPs, nMaxIPs, true)) {
+            if (explicit_seed_port || !LookupHost(host, vIPs, nMaxIPs, true)) {
+                // Defcoin currently uses ordinary node hostnames as seeds in
+                // addition to DNS seed infrastructure. If the service-bit
+                // prefixed lookup is not supported, fall back to the hostname
+                // itself. Use Lookup() here so explicit host:port seeds for
+                // non-default public nodes keep their advertised port.
+                Lookup(seed, vServices, Params().GetDefaultPort(), true, nMaxIPs);
+                if (explicit_seed_port && IsDefcoinMainnet()) {
+                    LogPrint(BCLog::NET, "Defcoin DNS seed %s resolved through explicit host:port path\n", seed);
+                }
+            }
+            if (!vIPs.empty() || !vServices.empty()) {
                 for (const CNetAddr& ip : vIPs) {
                     int nOneDay = 24*3600;
                     CAddress addr = CAddress(CService(ip, Params().GetDefaultPort()), requiredServiceBits);
                     addr.nTime = GetTime() - 3*nOneDay - rng.randrange(4*nOneDay); // use a random age between 3 and 7 days old
+                    vAdd.push_back(addr);
+                    found++;
+                }
+                for (const CService& service : vServices) {
+                    int nOneDay = 24*3600;
+                    CAddress addr = CAddress(service, requiredServiceBits);
+                    addr.nTime = GetTime() - 3*nOneDay - rng.randrange(4*nOneDay);
                     vAdd.push_back(addr);
                     found++;
                 }
@@ -1925,6 +1970,9 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
 
     // Minimum time before next feeler connection (in microseconds).
     int64_t nNextFeeler = PoissonNextSend(nStart*1000*1000, FEELER_INTERVAL);
+    int64_t nLastDefcoinFixedSeedTry = 0;
+    size_t defcoin_fixed_seed_cursor = 0;
+    std::set<CService> defcoin_preferred_gossip_attempted;
     while (!interruptNet)
     {
         ProcessAddrFetch();
@@ -1937,13 +1985,21 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
             return;
 
         // Add seed nodes if DNS seeds are all down (an infrastructure attack?).
-        // Note that we only do this if we started with an empty peers.dat,
-        // (in which case we will query DNS seeds immediately) *and* the DNS
-        // seeds have not returned any results.
-        if (addrman.size() == 0 && (GetTime() - nStart > 60)) {
+        // Note that Bitcoin/Litecoin only do this if we started with an empty
+        // peers.dat, but Defcoin's current network is small. If we still have
+        // very few outbound peers after startup, also inject the curated fixed
+        // seeds.
+        int nCurrentFullRelay = 0;
+        {
+            LOCK(cs_vNodes);
+            for (const CNode* pnode : vNodes) {
+                if (pnode->fSuccessfullyConnected && pnode->IsFullOutboundConn()) ++nCurrentFullRelay;
+            }
+        }
+        if ((addrman.size() == 0 || (IsDefcoinMainnet() && nCurrentFullRelay < DEFCOIN_FIXED_SEED_MIN_OUTBOUND_PEERS)) && (GetTime() - nStart > 60)) {
             static bool done = false;
             if (!done) {
-                LogPrintf("Adding fixed seed nodes as DNS doesn't seem to be available.\n");
+                LogPrintf("Adding fixed seed nodes as DNS/addrman peer coverage is low.\n");
                 CNetAddr local;
                 local.SetInternal("fixedseeds");
                 addrman.Add(ConvertSeeds(Params().FixedSeeds()), local);
@@ -2022,7 +2078,49 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
 
         int64_t nANow = GetAdjustedTime();
         int nTries = 0;
-        while (!interruptNet)
+        if (IsDefcoinMainnet() && conn_type == ConnectionType::OUTBOUND_FULL_RELAY && nCurrentFullRelay < DEFCOIN_FIXED_SEED_MIN_OUTBOUND_PEERS && GetTime() - nLastDefcoinFixedSeedTry > 15) {
+            nLastDefcoinFixedSeedTry = GetTime();
+            const std::vector<CAddress> fixed_seeds = ConvertSeeds(Params().FixedSeeds(), false);
+            for (size_t i = 0; i < fixed_seeds.size(); ++i) {
+                const CAddress& seed = fixed_seeds[(defcoin_fixed_seed_cursor + i) % fixed_seeds.size()];
+                if (!seed.IsValid() || IsLocal(seed) || !IsReachable(seed) || AlreadyConnectedToAddress(seed)) continue;
+                if (setConnected.count(seed.GetGroup(addrman.m_asmap))) continue;
+                if (!HasAllDesirableServiceFlags(seed.nServices)) continue;
+                addrConnect = seed;
+                defcoin_fixed_seed_cursor = (defcoin_fixed_seed_cursor + i + 1) % fixed_seeds.size();
+                LogPrint(BCLog::NET, "Trying Defcoin fixed seed connection to %s due to low peer coverage\n", addrConnect.ToString());
+                break;
+            }
+        }
+        if (IsDefcoinMainnet() && conn_type == ConnectionType::OUTBOUND_FULL_RELAY && !addrConnect.IsValid()) {
+            std::vector<CAddress> preferred_addrs = addrman.GetAddr(0, 100);
+            FastRandomContext insecure_rand;
+            Shuffle(preferred_addrs.begin(), preferred_addrs.end(), insecure_rand);
+            std::stable_sort(preferred_addrs.begin(), preferred_addrs.end(), [](const CAddress& a, const CAddress& b) {
+                const bool a_alt = a.GetPort() == DEFCOIN_ALT_PORT;
+                const bool b_alt = b.GetPort() == DEFCOIN_ALT_PORT;
+                if (a_alt != b_alt) return a_alt;
+                const bool a_preferred = IsDefcoinPreferredPort(a.GetPort());
+                const bool b_preferred = IsDefcoinPreferredPort(b.GetPort());
+                if (a_preferred != b_preferred) return a_preferred;
+                return a.nTime > b.nTime;
+            });
+            for (int pass = 0; pass < 2 && !addrConnect.IsValid(); ++pass) {
+                for (const CAddress& addr : preferred_addrs) {
+                    if (pass == 0 && addr.GetPort() != DEFCOIN_ALT_PORT) continue;
+                    if (pass == 1 && !IsDefcoinPreferredPort(addr.GetPort())) continue;
+                    if (defcoin_preferred_gossip_attempted.count(addr)) continue;
+                    if (!addr.IsValid() || IsLocal(addr) || !IsReachable(addr) || AlreadyConnectedToAddress(addr)) continue;
+                    if (setConnected.count(addr.GetGroup(addrman.m_asmap))) continue;
+                    if (!HasAllDesirableServiceFlags(addr.nServices)) continue;
+                    addrConnect = addr;
+                    defcoin_preferred_gossip_attempted.insert(addr);
+                    LogPrint(BCLog::NET, "Trying Defcoin preferred gossiped peer %s from addrman\n", addrConnect.ToString());
+                    break;
+                }
+            }
+        }
+        while (!interruptNet && !addrConnect.IsValid())
         {
             if (anchor && !m_anchors.empty()) {
                 const CAddress addr = m_anchors.back();
@@ -2035,11 +2133,16 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
                 break;
             }
 
-            // If we didn't find an appropriate destination after trying 100 addresses fetched from addrman,
+            // If we didn't find an appropriate destination after trying a bounded set of addresses fetched from addrman,
             // stop this loop, and let the outer loop run again (which sleeps, adds seed nodes, recalculates
             // already-connected network ranges, ...) before trying new addrman addresses.
+            //
+            // Defcoin's inherited addrman may contain a large number of old Litecoin-style
+            // 9333 endpoints. Spend more attempts on mainnet, and prefer currently observed
+            // Defcoin service ports before falling back to the broader address set.
             nTries++;
-            if (nTries > 100)
+            const int max_addrman_tries = IsDefcoinMainnet() && !fFeeler ? DEFCOIN_ADDRMAN_TRIES : 100;
+            if (nTries > max_addrman_tries)
                 break;
 
             CAddrInfo addr;
@@ -2070,6 +2173,9 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
 
             // Require outbound connections, other than feelers, to be to distinct network groups
             if (!fFeeler && setConnected.count(addr.GetGroup(addrman.m_asmap))) {
+                if (IsDefcoinMainnet()) {
+                    continue;
+                }
                 break;
             }
 
@@ -2080,6 +2186,10 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
 
             if (!IsReachable(addr))
                 continue;
+
+            if (IsDefcoinMainnet() && !fFeeler && nTries < DEFCOIN_PREFERRED_PORT_TRIES && !IsDefcoinPreferredPort(addr.GetPort())) {
+                continue;
+            }
 
             // only consider very recently tried nodes after 30 failed attempts
             if (nANow - addr.nLastTry < 600 && nTries < 30)
@@ -2099,7 +2209,13 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
             // from advertising themselves as a service on another host and
             // port, causing a DoS attack as nodes around the network attempt
             // to connect to it fruitlessly.
-            if (addr.GetPort() != Params().GetDefaultPort() && nTries < 50)
+            //
+            // Defcoin's active legacy network has a small peer set and some
+            // reachable historical nodes advertise non-default service ports.
+            // Permit discovered Defcoin mainnet addresses on those ports
+            // instead of applying Litecoin's default-port preference.
+            const bool allow_defcoin_non_default_port = IsDefcoinMainnet();
+            if (!allow_defcoin_non_default_port && addr.GetPort() != Params().GetDefaultPort() && nTries < 50)
                 continue;
 
             addrConnect = addr;
@@ -2114,6 +2230,10 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
                 if (!interruptNet.sleep_for(std::chrono::milliseconds(randsleep)))
                     return;
                 LogPrint(BCLog::NET, "Making feeler connection to %s\n", addrConnect.ToString());
+            }
+            if (IsDefcoinMainnet() && (addrConnect.GetPort() == 10332 || addrConnect.IsIPv6())) {
+                LogPrint(BCLog::NET, "Trying Defcoin %s outbound connection to %s\n",
+                         addrConnect.IsIPv6() ? "IPv6/non-default-port" : "non-default-port", addrConnect.ToString());
             }
 
             OpenNetworkConnection(addrConnect, (int)setConnected.size() >= std::min(nMaxConnections - 1, 2), &grant, nullptr, conn_type);
@@ -2716,6 +2836,11 @@ void CConnman::SetServices(const CService &addr, ServiceFlags nServices)
 void CConnman::MarkAddressGood(const CAddress& addr)
 {
     addrman.Good(addr);
+}
+
+bool CConnman::AddAndMarkAddressGood(const CAddress& addr)
+{
+    return addrman.AddAndMarkGood(addr);
 }
 
 bool CConnman::AddNewAddresses(const std::vector<CAddress>& vAddr, const CAddress& addrFrom, int64_t nTimePenalty)

@@ -30,6 +30,7 @@
 #include <init.h>
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
+#include <net_processing.h>
 #include <node/context.h>
 #include <node/ui_interface.h>
 #include <noui.h>
@@ -43,7 +44,9 @@
 #include <memory>
 
 #include <QApplication>
+#include <QColor>
 #include <QDebug>
+#include <QEventLoop>
 #include <QLibraryInfo>
 #include <QLocale>
 #include <QMessageBox>
@@ -194,7 +197,7 @@ void BitcoinCore::shutdown()
 }
 
 static int qt_argc = 1;
-static const char* qt_argv = "litecoin-qt";
+static const char* qt_argv = "defcoin-qt";
 
 BitcoinApplication::BitcoinApplication():
     QApplication(qt_argc, const_cast<char **>(&qt_argv)),
@@ -360,16 +363,24 @@ void BitcoinApplication::requestShutdown()
 void BitcoinApplication::initializeResult(bool success, interfaces::BlockAndHeaderTipInfo tip_info)
 {
     qDebug() << __func__ << ": Initialization result: " << success;
+    auto splash_status = [this](const QString& message) {
+        if (!m_splash) return;
+        m_splash->showMessage(message, Qt::AlignBottom | Qt::AlignHCenter, QColor(55, 55, 55));
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 25);
+    };
     // Set exit result.
     returnValue = success ? EXIT_SUCCESS : EXIT_FAILURE;
     if(success)
     {
         // Log this only after AppInitMain finishes, as then logging setup is guaranteed complete
         qInfo() << "Platform customization:" << platformStyle->getName();
+        splash_status(tr("Preparing node status..."));
         clientModel = new ClientModel(node(), optionsModel);
+        splash_status(tr("Preparing main window..."));
         window->setClientModel(clientModel, &tip_info);
 #ifdef ENABLE_WALLET
         if (WalletModel::isWalletEnabled()) {
+            splash_status(tr("Preparing wallet controls..."));
             m_wallet_controller = new WalletController(*clientModel, platformStyle, this);
             window->setWalletController(m_wallet_controller);
             if (paymentServer) {
@@ -379,6 +390,7 @@ void BitcoinApplication::initializeResult(bool success, interfaces::BlockAndHead
 #endif // ENABLE_WALLET
 
         // If -min option passed, start window minimized (iconified) or minimized to tray
+        splash_status(tr("Opening wallet window..."));
         if (!gArgs.GetBoolArg("-min", false)) {
             window->show();
         } else if (clientModel->getOptionsModel()->getMinimizeToTray() && window->hasTrayIcon()) {
@@ -592,6 +604,10 @@ int GuiMain(int argc, char* argv[])
     GUIUtil::LogQtInfo();
     // Load GUI settings from QSettings
     app.createOptionsModel(gArgs.GetBoolArg("-resetguisettings", false));
+    SetOnlyDefcoinUserAgents(gArgs.IsArgSet("-onlydefcoinua") ?
+        gArgs.GetBoolArg("-onlydefcoinua", DEFAULT_DEFCOIN_USER_AGENT_FILTER) :
+        QSettings().value(QStringLiteral("OnlyDefcoinUserAgents"), DEFAULT_DEFCOIN_USER_AGENT_FILTER).toBool());
+    GUIUtil::applyAppearanceTheme(GUIUtil::getConfiguredAppearanceTheme());
 
     if (did_show_intro) {
         // Store intro dialog settings other than datadir (network specific)

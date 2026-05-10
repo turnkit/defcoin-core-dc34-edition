@@ -22,7 +22,14 @@ class HelpMessageDialog : public QDialog
     Q_OBJECT
 
 public:
+    enum class Mode {
+        CommandLine,
+        About,
+        WalletHelp
+    };
+
     explicit HelpMessageDialog(QWidget *parent, bool about);
+    explicit HelpMessageDialog(QWidget *parent, Mode mode);
     ~HelpMessageDialog();
 
     void printToConsole();
@@ -31,6 +38,7 @@ public:
 private:
     Ui::HelpMessageDialog *ui;
     QString text;
+    bool m_about_sound_on_accept{false};
 
 private Q_SLOTS:
     void on_okButton_accepted();

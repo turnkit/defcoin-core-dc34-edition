@@ -228,6 +228,7 @@ BitcoinAmountField::BitcoinAmountField(QWidget *parent) :
     layout->addWidget(amount);
     unit = new QValueComboBox(this);
     unit->setModel(new BitcoinUnits(this));
+    GUIUtil::PolishComboBox(unit);
     layout->addWidget(unit);
     layout->addStretch(1);
     layout->setContentsMargins(0,0,0,0);

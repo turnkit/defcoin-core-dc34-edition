@@ -1,85 +1,115 @@
-Litecoin Core integration/staging tree
-=====================================
+Defcoin Core
+============
 
-[![Build Status](https://travis-ci.org/litecoin-project/litecoin.svg?branch=master)](https://travis-ci.org/litecoin-project/litecoin)
+Defcoin Core is a full node and wallet implementation for the Defcoin network.
+This release line is based on Litecoin Core v0.21.5.5 source and carries the
+Defcoin chain, seed, wallet, branding, and packaging changes needed for native
+Defcoin builds.
 
-https://litecoin.org
+The current development release identity is `2026.1`, codename `Token Jester`.
+Treat the repository as release-candidate work until the GitHub publication
+checklist and mainnet wallet compatibility checks are complete.
 
-What is Litecoin?
-----------------
+Key network facts
+-----------------
 
-Litecoin is an experimental digital currency that enables instant payments to
-anyone, anywhere in the world. Litecoin uses peer-to-peer technology to operate
-with no central authority: managing transactions and issuing money are carried
-out collectively by the network. Litecoin Core is the name of open source
-software which enables the use of this currency.
+- Proof of work: Scrypt
+- Target block time: 2 minutes
+- Difficulty retarget interval: 720 blocks
+- Subsidy halving interval: 840,000 blocks
+- Initial block reward: 50 DFC
+- Mainnet P2P/RPC ports: 1337 / 9332
+- Mainnet seed hosts: `seed.defcoin.io`, `seed.defcoin.mikej.tech`,
+  `seed.defcoin.dc903.org`
+- Testnet P2P/RPC ports: 31337 / 19332
+- Regtest P2P/RPC ports: 19444 / 19443
+- macOS data directory: `~/Library/Application Support/Defcoin/`
+- Config file: `defcoin.conf`
+- Display units: `DFC`, `Packet`, `Tock`, `Mote`
 
-For more information, as well as an immediately useable, binary version of
-the Litecoin Core software, see [https://litecoin.org](https://litecoin.org).
+Compatibility notes
+-------------------
+
+This port follows the Defcoin compatibility guidance from
+`packetloss404/DefCoinCore`: preserve the historical chain rules first, and do
+not blindly enable newer Litecoin mainnet consensus features.
+
+- Mainnet should use legacy Base58 addresses.
+- SegWit, CSV, CLTV, BIP66, Taproot, and MWEB are not treated as active Defcoin
+  mainnet consensus features in this branch.
+- Berkeley DB wallet support is enabled for legacy `wallet.dat` compatibility.
+- Back up old wallets before testing them with this software.
+- Signet is inherited from Litecoin Core internals but is not a supported
+  Defcoin network target yet.
+
+Build
+-----
+
+See [INSTALL.md](INSTALL.md), [doc/build-osx.md](doc/build-osx.md), and
+[doc/defcoin-modern-build-guide.md](doc/defcoin-modern-build-guide.md).
+The current known-good Apple Silicon GUI build was verified on macOS Tahoe
+26.4.x with Homebrew under `/opt/homebrew`, Qt 5.15.18, Berkeley DB 4.8,
+libevent 2.1.12, and Homebrew `boost@1.85`.
+
+For Defcoin-specific consensus, wallet, GUI, and porting notes, see:
+
+- [doc/defcoin-porting-notes.md](doc/defcoin-porting-notes.md)
+- [doc/defcoin-core-vs-litecoin-core.md](doc/defcoin-core-vs-litecoin-core.md)
+- [doc/defcoin-build-deviation-matrix.md](doc/defcoin-build-deviation-matrix.md)
+- [doc/defcoin-litecoin-conversion-notes.md](doc/defcoin-litecoin-conversion-notes.md)
+- [doc/defcoin-modern-build-guide.md](doc/defcoin-modern-build-guide.md)
+- [doc/litecoin-upstream-comparison-standard.md](doc/litecoin-upstream-comparison-standard.md)
+- [doc/github-publication-checklist.md](doc/github-publication-checklist.md)
+
+Native Apple Silicon outputs from this branch are expected to be:
+
+- `src/defcoind`
+- `src/defcoin-cli`
+- `src/defcoin-tx`
+- `src/defcoin-wallet`
+- `src/qt/defcoin-qt`
+- `Defcoin-Qt.app`
+
+Run the focused smoke test after building:
+
+```sh
+./contrib/defcoin-smoke-test.sh
+```
+
+To create a local Apple Silicon DMG after `make appbundle`:
+
+```sh
+./contrib/defcoin-macos-package-dmg.sh
+```
+
+The generated DMG is an ad-hoc signed developer distribution image, not a
+Developer ID signed or notarized public release.
+
+The Apple Silicon standard release DMG is named:
+
+```text
+Defcoin-Core-v2026.1-macOS-AppleSilicon.dmg
+```
+
+Release artifacts are attached to GitHub Releases rather than committed to
+source history.
+
+For the current design and porting notes, see:
+
+- [doc/defcoin-core-help-manual.md](doc/defcoin-core-help-manual.md)
+- [doc/defcoin-third-party-notices-standard.txt](doc/defcoin-third-party-notices-standard.txt)
+
+Runtime Defcoin artwork and generated Qt/macOS assets needed by the standard
+build are tracked in the repository under `src/qt/res/icons/`.
 
 License
 -------
 
-Litecoin Core is released under the terms of the MIT license. See [COPYING](COPYING) for more
-information or see https://opensource.org/licenses/MIT.
+Defcoin Core is released under the terms of the MIT license. See
+[COPYING](COPYING) for more information or see
+https://opensource.org/licenses/MIT.
 
-Development Process
--------------------
+Copyright (C) 2014-2026 The Defcoin Core developers.
 
-The `master` branch is regularly built (see `doc/build-*.md` for instructions) and tested, but it is not guaranteed to be
-completely stable. [Tags](https://github.com/litecoin-project/litecoin/tags) are created
-regularly from release branches to indicate new official, stable release versions of Litecoin Core.
-
-The https://github.com/litecoin-project/gui repository is used exclusively for the
-development of the GUI. Its master branch is identical in all monotree
-repositories. Release branches and tags do not exist, so please do not fork
-that repository unless it is for development reasons.
-
-The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md)
-and useful hints for developers can be found in [doc/developer-notes.md](doc/developer-notes.md).
-
-The developer [mailing list](https://groups.google.com/forum/#!forum/litecoin-dev)
-should be used to discuss complicated or controversial changes before working
-on a patch set.
-
-Developer IRC can be found on Freenode at #litecoin-dev.
-
-Testing
--------
-
-Testing and code review is the bottleneck for development; we get more pull
-requests than we can review and test on short notice. Please be patient and help out by testing
-other people's pull requests, and remember this is a security-critical project where any mistake might cost people
-lots of money.
-
-### Automated Testing
-
-Developers are strongly encouraged to write [unit tests](src/test/README.md) for new code, and to
-submit new unit tests for old code. Unit tests can be compiled and run
-(assuming they weren't disabled in configure) with: `make check`. Further details on running
-and extending unit tests can be found in [/src/test/README.md](/src/test/README.md).
-
-There are also [regression and integration tests](/test), written
-in Python, that are run automatically on the build server.
-These tests can be run (if the [test dependencies](/test) are installed) with: `test/functional/test_runner.py`
-
-The Travis CI system makes sure that every pull request is built for Windows, Linux, and macOS, and that unit/sanity tests are run automatically.
-
-### Manual Quality Assurance (QA) Testing
-
-Changes should be tested by somebody other than the developer who wrote the
-code. This is especially important for large or high-risk changes. It is useful
-to add a test plan to the pull request description if testing the changes is
-not straightforward.
-
-Translations
-------------
-
-We only accept translation fixes that are submitted through [Bitcoin Core's Transifex page](https://explore.transifex.com/bitcoin/bitcoin/).
-Translations are converted to Litecoin periodically.
-
-Translations are periodically pulled from Transifex and merged into the git repository. See the
-[translation process](doc/translation_process.md) for details on how this works.
-
-**Important**: We do not accept translation changes as GitHub pull requests because the next
-pull from Transifex would automatically overwrite them again.
+Defcoin Core is derived from Litecoin Core and Bitcoin Core. Portions remain
+credited to The Litecoin Core developers and The Bitcoin Core developers.

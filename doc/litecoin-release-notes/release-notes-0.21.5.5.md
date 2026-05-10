@@ -86,7 +86,7 @@ Build and test changes
 - Fixed the broken Transifex link in the README (`0f5f7d5`).
 
 Credits
-=======
+-------
 
 Thanks to everyone who directly contributed to this release:
 

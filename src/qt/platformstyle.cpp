@@ -18,7 +18,7 @@ static const struct {
     /** Extra padding/spacing in transactionview */
     const bool useExtraSpacing;
 } platform_styles[] = {
-    {"macosx", false, false, true},
+    {"macosx", false, true, true},
     {"windows", true, false, false},
     /* Other: linux, unix, ... */
     {"other", true, true, false}
@@ -100,6 +100,16 @@ QImage PlatformStyle::SingleColorImage(const QString& filename) const
     return ColorizeImage(filename, SingleColor());
 }
 
+QColor PlatformStyle::TextColor() const
+{
+    return QColor(QApplication::palette().color(QPalette::WindowText));
+}
+
+QColor PlatformStyle::SingleColor() const
+{
+    return QColor(95, 185, 255);
+}
+
 QIcon PlatformStyle::SingleColorIcon(const QString& filename) const
 {
     if (!colorizeIcons)
@@ -119,6 +129,11 @@ QIcon PlatformStyle::TextColorIcon(const QIcon& icon) const
     return ColorizeIcon(icon, TextColor());
 }
 
+QIcon PlatformStyle::AccentColorIcon(const QIcon& icon) const
+{
+    return ColorizeIcon(icon, SingleColor());
+}
+
 const PlatformStyle *PlatformStyle::instantiate(const QString &platformId)
 {
     for (unsigned x=0; x<platform_styles_count; ++x)
@@ -134,4 +149,3 @@ const PlatformStyle *PlatformStyle::instantiate(const QString &platformId)
     }
     return nullptr;
 }
-

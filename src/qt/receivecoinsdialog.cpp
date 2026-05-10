@@ -14,11 +14,15 @@
 #include <qt/recentrequeststablemodel.h>
 #include <qt/walletmodel.h>
 
+#include <chainparams.h>
+
 #include <QAction>
 #include <QCursor>
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QTextDocument>
+
+#include <limits>
 
 ReceiveCoinsDialog::ReceiveCoinsDialog(const PlatformStyle *_platformStyle, QWidget *parent) :
     QDialog(parent),
@@ -65,6 +69,14 @@ ReceiveCoinsDialog::ReceiveCoinsDialog(const PlatformStyle *_platformStyle, QWid
 
     connect(ui->useBech32, &QCheckBox::clicked, this, &ReceiveCoinsDialog::useBech32Clicked);
     connect(ui->useMWEB, &QCheckBox::clicked, this, &ReceiveCoinsDialog::useMWEBClicked);
+    ui->useMWEB->setToolTip(tr("MWEB is inherited from Litecoin Core internals and is not a supported Defcoin mainnet feature."));
+    ui->useMWEB->setVisible(false);
+    const bool bech32_supported = Params().GetConsensus().SegwitHeight != std::numeric_limits<int>::max();
+    ui->useBech32->setVisible(bech32_supported);
+    ui->useBech32->setEnabled(bech32_supported);
+    if (!bech32_supported) {
+        ui->useBech32->setChecked(false);
+    }
 }
 
 void ReceiveCoinsDialog::setModel(WalletModel *_model)
@@ -83,6 +95,8 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         tableView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         tableView->setModel(_model->getRecentRequestsTableModel());
         tableView->setAlternatingRowColors(true);
+        tableView->setShowGrid(true);
+        tableView->setGridStyle(Qt::SolidLine);
         tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
         tableView->setSelectionMode(QAbstractItemView::ContiguousSelection);
         tableView->setColumnWidth(RecentRequestsTableModel::Date, DATE_COLUMN_WIDTH);
@@ -95,7 +109,7 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         // Last 2 columns are set by the columnResizingFixer, when the table geometry is ready.
         columnResizingFixer = new GUIUtil::TableViewLastColumnResizingFixer(tableView, AMOUNT_MINIMUM_COLUMN_WIDTH, DATE_COLUMN_WIDTH, this);
 
-        if (model->wallet().getDefaultAddressType() == OutputType::BECH32) {
+        if (ui->useBech32->isVisible() && model->wallet().getDefaultAddressType() == OutputType::BECH32) {
             ui->useBech32->setCheckState(Qt::Checked);
         } else {
             ui->useBech32->setCheckState(Qt::Unchecked);
@@ -151,7 +165,7 @@ void ReceiveCoinsDialog::on_receiveButton_clicked()
     QString label = ui->reqLabel->text();
     /* Generate new receiving address */
     OutputType address_type;
-    if (ui->useBech32->isChecked()) {
+    if (ui->useBech32->isVisible() && ui->useBech32->isChecked()) {
         address_type = OutputType::BECH32;
     } else if (ui->useMWEB->isChecked()) {
         address_type = OutputType::MWEB;

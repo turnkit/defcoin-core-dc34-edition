@@ -21,8 +21,8 @@ public:
     bool getImagesOnButtons() const { return imagesOnButtons; }
     bool getUseExtraSpacing() const { return useExtraSpacing; }
 
-    QColor TextColor() const { return textColor; }
-    QColor SingleColor() const { return singleColor; }
+    QColor TextColor() const;
+    QColor SingleColor() const;
 
     /** Colorize an image (given filename) with the icon color */
     QImage SingleColorImage(const QString& filename) const;
@@ -35,6 +35,9 @@ public:
 
     /** Colorize an icon (given object) with the text color */
     QIcon TextColorIcon(const QIcon& icon) const;
+
+    /** Colorize an icon with the Defcoin accent color, regardless of platform defaults */
+    QIcon AccentColorIcon(const QIcon& icon) const;
 
 private:
     PlatformStyle(const QString &name, bool imagesOnButtons, bool colorizeIcons, bool useExtraSpacing);
@@ -49,4 +52,3 @@ private:
 };
 
 #endif // BITCOIN_QT_PLATFORMSTYLE_H
-

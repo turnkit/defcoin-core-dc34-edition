@@ -11,6 +11,7 @@
 
 #include <QWidget>
 #include <QKeyEvent>
+#include <QList>
 
 class PlatformStyle;
 class TransactionFilterProxy;
@@ -80,8 +81,10 @@ private:
     QAction *rebroadcastAction{nullptr};
     QAction *copyAddressAction{nullptr};
     QAction *copyLabelAction{nullptr};
+    QList<QAction*> thirdPartyTxUrlActions;
 
     QWidget *createDateRangeWidget();
+    void refreshThirdPartyTxUrlActions();
 
     GUIUtil::TableViewLastColumnResizingFixer *columnResizingFixer{nullptr};
 
@@ -101,6 +104,7 @@ private Q_SLOTS:
     void copyTxHex();
     void copyTxPlainText();
     void openThirdPartyTxUrl(QString url);
+    void openThirdPartyAddressUrl(QString url);
     void updateWatchOnlyColumn(bool fHaveWatchOnly);
     void abandonTx();
     void bumpFee();

@@ -212,7 +212,7 @@ $($(1)_staged): | $($(1)_built)
 	$(AT)echo Staging $(1)...
 	$(AT)mkdir -p $($(1)_staging_dir)/$(host_prefix)
 	$(AT)cd $($(1)_build_dir); $($(1)_stage_env) $(call $(1)_stage_cmds, $(1))
-	$(AT)rm -rf $($(1)_extract_dir)
+	$(AT)for i in 1 2 3; do test ! -e $($(1)_extract_dir) && break; find $($(1)_extract_dir) -name .DS_Store -type f -delete; find $($(1)_extract_dir) -name __MACOSX -type d -prune -exec rm -rf {} +; rm -rf $($(1)_extract_dir) && break; sleep 1; done; test ! -e $($(1)_extract_dir)
 	$(AT)touch $$@
 $($(1)_postprocessed): | $($(1)_staged)
 	$(AT)echo Postprocessing $(1)...
@@ -220,11 +220,13 @@ $($(1)_postprocessed): | $($(1)_staged)
 	$(AT)touch $$@
 $($(1)_cached): | $($(1)_dependencies) $($(1)_postprocessed)
 	$(AT)echo Caching $(1)...
+	$(AT)find $$($(1)_staging_dir) -name .DS_Store -type f -delete
+	$(AT)find $$($(1)_staging_dir) -name __MACOSX -type d -prune -exec rm -rf {} +
 	$(AT)cd $$($(1)_staging_dir)/$(host_prefix); find . | sort | tar --no-recursion -czf $$($(1)_staging_dir)/$$(@F) -T -
 	$(AT)mkdir -p $$(@D)
 	$(AT)rm -rf $$(@D) && mkdir -p $$(@D)
 	$(AT)mv $$($(1)_staging_dir)/$$(@F) $$(@)
-	$(AT)rm -rf $($(1)_staging_dir)
+	$(AT)for i in 1 2 3; do test ! -e $$($(1)_staging_dir) && break; find $$($(1)_staging_dir) -name .DS_Store -type f -delete; find $$($(1)_staging_dir) -name __MACOSX -type d -prune -exec rm -rf {} +; rm -rf $$($(1)_staging_dir) && break; sleep 1; done; test ! -e $$($(1)_staging_dir)
 $($(1)_cached_checksum): $($(1)_cached)
 	$(AT)cd $$(@D); $(build_SHA256SUM) $$(<F) > $$(@)
 

@@ -65,7 +65,7 @@
    <item row="2" column="1" alignment="Qt::AlignTop">
     <widget class="QLabel" name="uri_content">
      <property name="text">
-      <string notr="true">litecoin:LTC1...</string>
+      <string notr="true">defcoin:D...</string>
      </property>
      <property name="textFormat">
       <enum>Qt::RichText</enum>
@@ -97,7 +97,7 @@
    <item row="3" column="1" alignment="Qt::AlignTop">
     <widget class="QLabel" name="address_content">
      <property name="text">
-      <string notr="true">bc1...</string>
+      <string notr="true">D...</string>
      </property>
      <property name="textFormat">
       <enum>Qt::PlainText</enum>
@@ -126,7 +126,7 @@
    <item row="4" column="1" alignment="Qt::AlignTop">
     <widget class="QLabel" name="amount_content">
      <property name="text">
-      <string notr="true">0.00000000 BTC</string>
+      <string notr="true">0.00000000 DFC</string>
      </property>
      <property name="textFormat">
       <enum>Qt::PlainText</enum>
@@ -232,7 +232,7 @@
      </property>
     </widget>
    </item>
-   <item row="8" column="0" colspan="2">
+   <item row="9" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QPushButton" name="btnCopyURI">

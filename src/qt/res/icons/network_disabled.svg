@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="32" viewBox="0 0 64 32">
+  <g fill="none" stroke="#8fcaff" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="5.8" y="13.2" width="12.4" height="8.8" rx="1.5" stroke-width="2"/>
+    <path d="M10.2 25.2h3.6M12 22v3.2M18.5 17.6h7.6" stroke-width="2"/>
+    <path d="M31 22.2h20.2c4.4 0 7.9-2.8 7.9-6.5 0-3.6-3.5-6.5-7.9-6.5h-1.5c-2-2.5-5.8-3.5-10.8-3.5-6.1 0-10.1 1.7-12.1 4.8-1.1-.4-2.5-.7-3.9-.7-4.4 0-7.9 2.8-7.9 6.4s3.5 6 7.9 6Z" stroke-width="2.2"/>
+  </g>
+  <text x="42.1" y="17.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="7.3" font-weight="800" letter-spacing="0" fill="#8fcaff">WAN</text>
+  <path d="M6.5 28.5 58.5 3.5" fill="none" stroke="#111111" stroke-width="3.2" stroke-linecap="round"/>
+</svg>

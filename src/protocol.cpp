@@ -145,10 +145,12 @@ bool CMessageHeader::IsCommandValid() const
 
 
 ServiceFlags GetDesirableServiceFlags(ServiceFlags services) {
+    // Defcoin mainnet preserves the historical pre-SegWit chain. Do not require
+    // Litecoin's witness/MWEB service bits when selecting or accepting peers.
     if ((services & NODE_NETWORK_LIMITED) && g_initial_block_download_completed) {
-        return ServiceFlags(NODE_NETWORK_LIMITED | NODE_WITNESS | NODE_MWEB);
+        return ServiceFlags(NODE_NETWORK_LIMITED);
     }
-    return ServiceFlags(NODE_NETWORK | NODE_WITNESS | NODE_MWEB);
+    return ServiceFlags(NODE_NETWORK);
 }
 
 void SetServiceFlagsIBDCache(bool state) {

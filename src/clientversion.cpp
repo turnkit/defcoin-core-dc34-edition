@@ -12,7 +12,7 @@
  * for both bitcoind and bitcoin-qt, to make it harder for attackers to
  * target servers or GUI users specifically.
  */
-const std::string CLIENT_NAME("LitecoinCore");
+const std::string CLIENT_NAME("DefcoinCore");
 
 
 #ifdef HAVE_BUILD_INFO
@@ -30,8 +30,7 @@ const std::string CLIENT_NAME("LitecoinCore");
     #define BUILD_DESC BUILD_GIT_TAG
     #define BUILD_SUFFIX ""
 #else
-    #define BUILD_DESC "v" STRINGIZE(CLIENT_VERSION_MAJOR) "." STRINGIZE(CLIENT_VERSION_MINOR) \
-                       "." STRINGIZE(CLIENT_VERSION_REVISION) "." STRINGIZE(CLIENT_VERSION_BUILD)
+    #define BUILD_DESC "v" DEFCOIN_RELEASE_VERSION_STR
     #ifdef BUILD_GIT_COMMIT
         #define BUILD_SUFFIX "-" BUILD_GIT_COMMIT
     #elif defined(GIT_COMMIT_ID)
@@ -41,7 +40,13 @@ const std::string CLIENT_NAME("LitecoinCore");
     #endif
 #endif
 
-const std::string CLIENT_BUILD(BUILD_DESC BUILD_SUFFIX);
+#define BUILD_VARIANT_SUFFIX DEFCOIN_BUILD_VARIANT_SUFFIX_STR
+
+const std::string CLIENT_BUILD(BUILD_DESC BUILD_VARIANT_SUFFIX BUILD_SUFFIX);
+const std::string DEFCOIN_RELEASE_VERSION(DEFCOIN_RELEASE_VERSION_STR);
+const std::string DEFCOIN_RELEASE_CODENAME(DEFCOIN_RELEASE_CODENAME_STR);
+const std::string DEFCOIN_PRODUCT_NAME(DEFCOIN_PRODUCT_NAME_STR);
+const std::string DEFCOIN_OS_DISPLAY_VERSION(DEFCOIN_OS_DISPLAY_VERSION_STR);
 
 static std::string FormatVersion(int nVersion)
 {
@@ -56,6 +61,21 @@ std::string FormatFullVersion()
     return CLIENT_BUILD;
 }
 
+std::string FormatReleaseCodename()
+{
+    return DEFCOIN_RELEASE_CODENAME;
+}
+
+std::string FormatProductName()
+{
+    return DEFCOIN_PRODUCT_NAME;
+}
+
+std::string FormatOSDisplayVersion()
+{
+    return DEFCOIN_OS_DISPLAY_VERSION;
+}
+
 /**
  * Format the subversion field according to BIP 14 spec (https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki)
  */
@@ -63,7 +83,12 @@ std::string FormatSubVersion(const std::string& name, int nClientVersion, const 
 {
     std::ostringstream ss;
     ss << "/";
-    ss << name << ":" << FormatVersion(nClientVersion);
+    ss << name << ":";
+    if (name == CLIENT_NAME) {
+        ss << DEFCOIN_RELEASE_VERSION;
+    } else {
+        ss << FormatVersion(nClientVersion);
+    }
     if (!comments.empty())
     {
         std::vector<std::string>::const_iterator it(comments.begin());

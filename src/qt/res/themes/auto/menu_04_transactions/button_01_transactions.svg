@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" preserveAspectRatio="xMidYMid meet" shape-rendering="geometricPrecision">
+  <svg x="8.000" y="11.478" width="32.000" height="25.043" viewBox="0 0 68.456076 53.918591" preserveAspectRatio="xMidYMid meet">
+    <g transform="translate(-12.500000,70.939672) scale(0.100000,-0.100000)"
+fill="#8fcaff" stroke="none">
+<path d="M205 696 c-16 -7 -41 -26 -55 -41 -25 -26 -25 -28 -25 -215 0 -187 0
+-189 25 -215 46 -51 71 -55 312 -55 199 0 228 3 266 20 68 31 82 72 82 250 0
+178 -14 219 -82 250 -39 18 -66 20 -268 19 -166 0 -233 -3 -255 -13z m503 -88
+c7 -7 12 -25 12 -40 l0 -28 -260 0 -260 0 0 28 c0 15 5 33 12 40 17 17 479 17
+496 0z m12 -236 c0 -55 -4 -92 -12 -100 -17 -17 -479 -17 -496 0 -8 8 -12 45
+-12 100 l0 88 260 0 260 0 0 -88z M545 370 c-13 -21 11 -31 61 -28 36 2 49 7
+49 18 0 19 -99 27 -110 10z"/>
+</g>
+  </svg>
+</svg>

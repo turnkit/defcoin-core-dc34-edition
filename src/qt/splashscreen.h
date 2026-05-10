@@ -5,6 +5,8 @@
 #ifndef BITCOIN_QT_SPLASHSCREEN_H
 #define BITCOIN_QT_SPLASHSCREEN_H
 
+#include <QElapsedTimer>
+#include <QTimer>
 #include <QWidget>
 
 #include <memory>
@@ -61,6 +63,9 @@ private:
     QString curMessage;
     QColor curColor;
     int curAlignment;
+    int m_progress_percent{-1};
+    QElapsedTimer m_elapsed_timer;
+    QTimer* m_alive_timer{nullptr};
 
     interfaces::Node* m_node = nullptr;
     bool m_shutdown = false;

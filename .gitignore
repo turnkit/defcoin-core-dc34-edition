@@ -1,4 +1,5 @@
 *.tar.gz
+*.zip
 
 *.exe
 *.pdb
@@ -9,6 +10,13 @@ src/litecoin-gui
 src/litecoin-node
 src/litecoin-tx
 src/litecoin-wallet
+src/defcoin
+src/defcoind
+src/defcoin-cli
+src/defcoin-gui
+src/defcoin-node
+src/defcoin-tx
+src/defcoin-wallet
 src/test/fuzz/*
 !src/test/fuzz/*.*
 src/test/test_litecoin
@@ -62,6 +70,7 @@ src/qt/bitcoin-qt.includes
 .libs
 .vscode
 .*.swp
+*~
 *.*~*
 *.bak
 *.rej
@@ -95,7 +104,9 @@ src/qt/bitcoin-qt.includes
 Makefile
 !depends/Makefile
 src/qt/litecoin-qt
+src/qt/defcoin-qt
 Litecoin-Qt.app
+Defcoin-Qt.app
 background.tiff*
 
 # Qt Creator
@@ -109,7 +120,15 @@ litecoin-qt_test
 qrc_*.cpp
 # Mac specific
 .DS_Store
+__MACOSX/
 build
+
+# Local artwork/import scratch. Keep source artwork outside this repository;
+# only generated runtime assets needed by the app should be committed.
+defcoin_custom_graphics/
+
+# Local Apple Silicon dependency bootstrap output.
+.defcoin-build-deps/
 
 # Previous releases
 releases

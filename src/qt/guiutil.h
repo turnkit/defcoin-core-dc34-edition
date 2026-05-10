@@ -10,12 +10,16 @@
 
 #include <QEvent>
 #include <QHeaderView>
+#include <QIcon>
 #include <QItemDelegate>
 #include <QMessageBox>
 #include <QObject>
+#include <QPixmap>
 #include <QProgressBar>
 #include <QString>
+#include <QStringList>
 #include <QTableView>
+#include <QVector>
 #include <QLabel>
 
 class QValidatedLineEdit;
@@ -29,6 +33,7 @@ namespace interfaces
 QT_BEGIN_NAMESPACE
 class QAbstractItemView;
 class QAction;
+class QComboBox;
 class QDateTime;
 class QFont;
 class QLineEdit;
@@ -43,12 +48,39 @@ QT_END_NAMESPACE
  */
 namespace GUIUtil
 {
+    struct ThemeDescriptor
+    {
+        QString id;
+        QString name;
+        QString shortName;
+        QString description;
+        QString creator;
+        QString created;
+        QString baseTheme;
+        QString tooltip;
+        bool custom{false};
+    };
+
     // Create human-readable string from date
     QString dateTimeStr(const QDateTime &datetime);
     QString dateTimeStr(qint64 nTime);
 
     // Return a monospace font
     QFont fixedPitchFont();
+
+    // Normalize, load, and apply the saved Qt appearance theme.
+    QString normalizeAppearanceTheme(const QString& theme);
+    QString getConfiguredAppearanceTheme();
+    QVector<ThemeDescriptor> availableAppearanceThemes();
+    ThemeDescriptor appearanceThemeDescriptor(const QString& theme);
+    QString nextAppearanceTheme(const QString& theme);
+    QString appearanceThemeBaseStyle(const QString& theme);
+    QString appearanceThemeToolTip(const QString& theme);
+    QString resolveThemeAsset(const QString& asset_name, const QString& theme = QString());
+    QIcon themeAssetIcon(const QString& asset_name, const QString& fallback_resource = QString(), const QString& theme = QString());
+    QPixmap themeAssetPixmap(const QString& asset_name, const QString& fallback_resource = QString(), const QString& theme = QString());
+    void refreshAppearanceThemeCatalog();
+    void applyAppearanceTheme(const QString& theme);
 
     // Set up widget for address
     void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent);
@@ -288,6 +320,9 @@ namespace GUIUtil
 
     // Fix known bugs in QProgressDialog class.
     void PolishProgressDialog(QProgressDialog* dialog);
+
+    // Size combo boxes and their popups so visible entries are not clipped.
+    void PolishComboBox(QComboBox* combo, int minimum_width = 0);
 
     /**
      * Returns the distance in pixels appropriate for drawing a subsequent character after text.

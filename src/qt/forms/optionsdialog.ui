@@ -6,12 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>560</width>
-    <height>440</height>
+    <width>720</width>
+    <height>560</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>700</width>
+    <height>520</height>
+   </size>
+  </property>
   <property name="windowTitle">
-   <string>Options</string>
+   <string>Preferences</string>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -29,7 +35,7 @@
       <layout class="QVBoxLayout" name="verticalLayout_Main">
        <item>
         <widget class="QCheckBox" name="bitcoinAtStartup">
-         <property name="toolTip">
+          <property name="toolTip">
           <string>Automatically start %1 after logging in to the system.</string>
          </property>
          <property name="text">
@@ -54,8 +60,8 @@
        <layout class="QHBoxLayout" name="horizontalLayout_Main_Prune">
         <item>
          <widget class="QCheckBox" name="prune">
-          <property name="toolTip">
-           <string>Disables some advanced features but all blocks will still be fully validated. Reverting this setting requires re-downloading the entire blockchain. Actual disk usage may be somewhat higher.</string>
+         <property name="toolTip">
+           <string>Pruned nodes fully validate the chain but keep only recent raw block and undo data. Old-block wallet rescans and txindex-style history are unavailable for pruned blocks. Returning to archival mode requires reindexing and redownloading missing block data. Actual disk usage may be somewhat higher.</string>
           </property>
           <property name="text">
            <string>Prune &amp;block storage to</string>
@@ -93,10 +99,13 @@
        <item>
         <widget class="QLabel" name="pruneWarning">
          <property name="text">
-          <string>Reverting this setting requires re-downloading the entire blockchain.</string>
+          <string>Pruning deletes old raw block and undo files after validation. Old-block wallet rescans and txindex-style history are unavailable for pruned blocks. Returning to archival mode requires reindexing and redownloading missing block data.</string>
          </property>
          <property name="textFormat">
           <enum>Qt::PlainText</enum>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -209,7 +218,7 @@
           <item>
            <widget class="QCheckBox" name="coinControlFeatures">
             <property name="toolTip">
-             <string>Whether to show coin control features or not.</string>
+             <string>Show advanced controls for choosing which specific received coins are spent. Most users can leave this off; it is useful when you need tighter control over fees, privacy, or which incoming payments are used in a transaction.</string>
             </property>
             <property name="text">
              <string>Enable coin &amp;control features</string>
@@ -219,7 +228,7 @@
           <item>
            <widget class="QCheckBox" name="mwebFeatures">
             <property name="text">
-             <string>Enable advanced MW&amp;EB features</string>
+             <string>Show unsupported MW&amp;EB test controls</string>
             </property>
            </widget>
           </item>
@@ -259,7 +268,7 @@
        <item>
         <widget class="QCheckBox" name="mapPortUpnp">
          <property name="toolTip">
-          <string>Automatically open the Litecoin client port on the router. This only works when your router supports UPnP and it is enabled.</string>
+          <string>Automatically open the Defcoin client port on the router. This only works when your router supports UPnP and it is enabled.</string>
          </property>
          <property name="text">
           <string>Map port using &amp;UPnP</string>
@@ -279,7 +288,7 @@
        <item>
         <widget class="QCheckBox" name="connectSocks">
          <property name="toolTip">
-          <string>Connect to the Litecoin network through a SOCKS5 proxy.</string>
+          <string>Connect to the Defcoin network through a SOCKS5 proxy.</string>
          </property>
          <property name="text">
           <string>&amp;Connect through SOCKS5 proxy (default proxy):</string>
@@ -466,7 +475,7 @@
        <item>
         <widget class="QCheckBox" name="connectSocksTor">
          <property name="toolTip">
-          <string>Connect to the Litecoin network through a separate SOCKS5 proxy for Tor onion services.</string>
+          <string>Connect to the Defcoin network through a separate SOCKS5 proxy for Tor onion services.</string>
          </property>
          <property name="text">
           <string>Use separate SOCKS&amp;5 proxy to reach peers via Tor onion services:</string>
@@ -646,6 +655,30 @@
            </property>
           </widget>
          </item>
+       </layout>
+      </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_Theme_Display">
+         <item>
+          <widget class="QLabel" name="themeLabel">
+           <property name="text">
+            <string>Interface &amp;theme:</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::PlainText</enum>
+           </property>
+           <property name="buddy">
+            <cstring>theme</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QValueComboBox" name="theme">
+           <property name="toolTip">
+            <string>Choose the wallet interface theme. Auto follows the system appearance where Qt supports it.</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -724,7 +757,7 @@
         <item>
          <widget class="QLabel" name="overriddenByCommandLineInfoLabel">
           <property name="text">
-           <string>Options set in this dialog are overridden by the command line or in the configuration file:</string>
+           <string>Preferences set in this dialog are overridden by the command line or in the configuration file:</string>
           </property>
           <property name="textFormat">
            <enum>Qt::PlainText</enum>
@@ -780,12 +813,12 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="resetButton">
-         <property name="toolTip">
-          <string>Reset all client options to default.</string>
-         </property>
+      <widget class="QPushButton" name="resetButton">
+       <property name="toolTip">
+        <string>Reset application preferences to defaults. This does not delete your wallet, private keys, blockchain data, or transactions; it only clears saved UI and client settings.</string>
+       </property>
          <property name="text">
-          <string>&amp;Reset Options</string>
+          <string>&amp;Reset Preferences</string>
          </property>
          <property name="autoDefault">
           <bool>false</bool>

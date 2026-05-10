@@ -18,14 +18,37 @@
 #include <netbase.h>
 #include <txdb.h> // for -dbcache defaults
 #include <util/string.h>
+#include <util/system.h>
 
 #include <QDebug>
 #include <QSettings>
 #include <QStringList>
+#include <QUrl>
 
 const char *DEFAULT_GUI_PROXY_HOST = "127.0.0.1";
 
 static const QString GetDefaultProxyAddress();
+
+namespace {
+QString NormalizeThirdPartyExplorerUrl(QString url)
+{
+    url = url.trimmed();
+    if (url.isEmpty()) return QString();
+    if (url.contains(QStringLiteral("%s"))) return url;
+
+    QUrl parsed(url);
+    if (!parsed.isValid() || parsed.scheme().isEmpty() || parsed.host().isEmpty()) return QString();
+    if (parsed.host().contains(QStringLiteral("blockchair.com"), Qt::CaseInsensitive)) {
+        return QStringLiteral("https://blockchair.com/litecoin/transaction/%s");
+    }
+
+    QString normalized = url;
+    if (normalized.endsWith(QLatin1Char('/'))) {
+        normalized.chop(1);
+    }
+    return normalized + QStringLiteral("/tx/%s");
+}
+} // namespace
 
 OptionsModel::OptionsModel(QObject *parent, bool resetSettings) :
     QAbstractListModel(parent)
@@ -73,8 +96,13 @@ void OptionsModel::Init(bool resetSettings)
     nDisplayUnit = settings.value("nDisplayUnit").toInt();
 
     if (!settings.contains("strThirdPartyTxUrls"))
-        settings.setValue("strThirdPartyTxUrls", "");
+        settings.setValue("strThirdPartyTxUrls", NormalizeThirdPartyExplorerUrl(QString::fromStdString(gArgs.GetArg("-blockexplorer", ""))));
     strThirdPartyTxUrls = settings.value("strThirdPartyTxUrls", "").toString();
+
+    if (!settings.contains("LinkWalletTextSizes"))
+        settings.setValue("LinkWalletTextSizes", true);
+    if (!settings.contains("HideTextResizeControls"))
+        settings.setValue("HideTextResizeControls", false);
 
     if (!settings.contains("fCoinControlFeatures"))
         settings.setValue("fCoinControlFeatures", false);
@@ -158,6 +186,16 @@ void OptionsModel::Init(bool resetSettings)
         addOverriddenOption("-lang");
 
     language = settings.value("language").toString();
+
+    if (!settings.contains("appearanceTheme")) {
+#if ENABLE_DEFCOIN_FUN_UI
+        settings.setValue("appearanceTheme", "34");
+#else
+        settings.setValue("appearanceTheme", "auto");
+#endif
+    }
+    appearanceTheme = GUIUtil::normalizeAppearanceTheme(settings.value("appearanceTheme").toString());
+    settings.setValue("appearanceTheme", appearanceTheme);
 }
 
 /** Helper function to copy contents from one QSettings to another.
@@ -315,6 +353,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return strThirdPartyTxUrls;
         case Language:
             return settings.value("language");
+        case AppearanceTheme:
+            return appearanceTheme;
         case CoinControlFeatures:
             return fCoinControlFeatures;
         case MWEBFeatures:
@@ -433,7 +473,6 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             if (strThirdPartyTxUrls != value.toString()) {
                 strThirdPartyTxUrls = value.toString();
                 settings.setValue("strThirdPartyTxUrls", strThirdPartyTxUrls);
-                setRestartRequired(true);
             }
             break;
         case Language:
@@ -442,6 +481,16 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
                 setRestartRequired(true);
             }
             break;
+        case AppearanceTheme: {
+            const QString new_theme = GUIUtil::normalizeAppearanceTheme(value.toString());
+            if (appearanceTheme != new_theme) {
+                appearanceTheme = new_theme;
+                settings.setValue("appearanceTheme", appearanceTheme);
+                GUIUtil::applyAppearanceTheme(appearanceTheme);
+                Q_EMIT appearanceThemeChanged(appearanceTheme);
+            }
+            break;
+        }
         case CoinControlFeatures:
             fCoinControlFeatures = value.toBool();
             settings.setValue("fCoinControlFeatures", fCoinControlFeatures);

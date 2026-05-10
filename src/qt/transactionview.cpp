@@ -25,15 +25,28 @@
 #include <QDoubleValidator>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
 #include <QPoint>
 #include <QScrollBar>
+#include <QSettings>
 #include <QTableView>
 #include <QTimer>
 #include <QUrl>
 #include <QVBoxLayout>
+
+namespace {
+QString ExplorerAddressUrlTemplate(QString url)
+{
+    QString address_url = url;
+    address_url.replace(QStringLiteral("/tx/%s"), QStringLiteral("/address/%s"), Qt::CaseInsensitive);
+    address_url.replace(QStringLiteral("/transaction/%s"), QStringLiteral("/address/%s"), Qt::CaseInsensitive);
+    address_url.replace(QStringLiteral("/transactions/%s"), QStringLiteral("/address/%s"), Qt::CaseInsensitive);
+    return address_url;
+}
+}
 
 TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *parent) :
     QWidget(parent)
@@ -72,6 +85,7 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     dateWidget->addItem(tr("Last month"), LastMonth);
     dateWidget->addItem(tr("This year"), ThisYear);
     dateWidget->addItem(tr("Range..."), Range);
+    GUIUtil::PolishComboBox(dateWidget, platformStyle->getUseExtraSpacing() ? 121 : 120);
     hlayout->addWidget(dateWidget);
 
     typeWidget = new QComboBox(this);
@@ -89,6 +103,7 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     typeWidget->addItem(tr("To yourself"), TransactionFilterProxy::TYPE(WalletTxRecord::SendToSelf));
     typeWidget->addItem(tr("Mined"), TransactionFilterProxy::TYPE(WalletTxRecord::Generated));
     typeWidget->addItem(tr("Other"), TransactionFilterProxy::TYPE(WalletTxRecord::Other));
+    GUIUtil::PolishComboBox(typeWidget, platformStyle->getUseExtraSpacing() ? 121 : 120);
 
     hlayout->addWidget(typeWidget);
 
@@ -222,6 +237,8 @@ void TransactionView::setModel(WalletModel *_model)
         transactionView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         transactionView->setModel(transactionProxyModel);
         transactionView->setAlternatingRowColors(true);
+        transactionView->setShowGrid(true);
+        transactionView->setGridStyle(Qt::SolidLine);
         transactionView->setSelectionBehavior(QAbstractItemView::SelectRows);
         transactionView->setSelectionMode(QAbstractItemView::ExtendedSelection);
         transactionView->horizontalHeader()->setSortIndicator(TransactionTableModel::Date, Qt::DescendingOrder);
@@ -236,23 +253,13 @@ void TransactionView::setModel(WalletModel *_model)
 
         columnResizingFixer = new GUIUtil::TableViewLastColumnResizingFixer(transactionView, AMOUNT_MINIMUM_COLUMN_WIDTH, MINIMUM_COLUMN_WIDTH, this);
 
-        if (_model->getOptionsModel())
-        {
-            // Add third party transaction URLs to context menu
-            QStringList listUrls = _model->getOptionsModel()->getThirdPartyTxUrls().split("|", QString::SkipEmptyParts);
-            for (int i = 0; i < listUrls.size(); ++i)
-            {
-                QString url = listUrls[i].trimmed();
-                QString host = QUrl(url, QUrl::StrictMode).host();
-                if (!host.isEmpty())
-                {
-                    QAction *thirdPartyTxUrlAction = new QAction(host, this); // use host as menu item label
-                    if (i == 0)
-                        contextMenu->addSeparator();
-                    contextMenu->addAction(thirdPartyTxUrlAction);
-                    connect(thirdPartyTxUrlAction, &QAction::triggered, [this, url] { openThirdPartyTxUrl(url); });
+        if (_model->getOptionsModel()) {
+            refreshThirdPartyTxUrlActions();
+            connect(_model->getOptionsModel(), &QAbstractItemModel::dataChanged, this, [this](const QModelIndex& topLeft, const QModelIndex& bottomRight) {
+                if (topLeft.row() <= OptionsModel::ThirdPartyTxUrls && bottomRight.row() >= OptionsModel::ThirdPartyTxUrls) {
+                    refreshThirdPartyTxUrlActions();
                 }
-            }
+            });
         }
 
         // show/hide column Watch-only
@@ -260,6 +267,42 @@ void TransactionView::setModel(WalletModel *_model)
 
         // Watch-only signal
         connect(_model, &WalletModel::notifyWatchonlyChanged, this, &TransactionView::updateWatchOnlyColumn);
+    }
+}
+
+void TransactionView::refreshThirdPartyTxUrlActions()
+{
+    for (QAction* action : thirdPartyTxUrlActions) {
+        contextMenu->removeAction(action);
+        action->deleteLater();
+    }
+    thirdPartyTxUrlActions.clear();
+
+    if (!model || !model->getOptionsModel()) return;
+    if (!QSettings().value(QStringLiteral("ThirdPartyTxUrlsEnabled"), false).toBool()) return;
+
+    const QStringList listUrls = model->getOptionsModel()->getThirdPartyTxUrls().split("|", QString::SkipEmptyParts);
+    bool added_separator = false;
+    for (const QString& raw_url : listUrls) {
+        const QString url = raw_url.trimmed();
+        const QString host = QUrl(url, QUrl::StrictMode).host();
+        if (host.isEmpty()) continue;
+        if (!added_separator) {
+            QAction* separator = new QAction(this);
+            separator->setSeparator(true);
+            contextMenu->addAction(separator);
+            thirdPartyTxUrlActions.append(separator);
+            added_separator = true;
+        }
+        QAction* thirdPartyTxUrlAction = new QAction(QIcon(QStringLiteral(":/icons/block_explorer_link")), tr("Open transaction in %1").arg(host), this);
+        contextMenu->addAction(thirdPartyTxUrlAction);
+        thirdPartyTxUrlActions.append(thirdPartyTxUrlAction);
+        connect(thirdPartyTxUrlAction, &QAction::triggered, [this, url] { openThirdPartyTxUrl(url); });
+        QAction* thirdPartyAddressUrlAction = new QAction(QIcon(QStringLiteral(":/icons/block_explorer_link")), tr("Open wallet address in %1").arg(host), this);
+        thirdPartyAddressUrlAction->setProperty("requiresAddress", true);
+        contextMenu->addAction(thirdPartyAddressUrlAction);
+        thirdPartyTxUrlActions.append(thirdPartyAddressUrlAction);
+        connect(thirdPartyAddressUrlAction, &QAction::triggered, [this, url] { openThirdPartyAddressUrl(url); });
     }
 }
 
@@ -387,6 +430,7 @@ void TransactionView::exportClicked()
 
 void TransactionView::contextualMenu(const QPoint &point)
 {
+    refreshThirdPartyTxUrlActions();
     QModelIndex index = transactionView->indexAt(point);
     QModelIndexList selection = transactionView->selectionModel()->selectedRows(0);
     if (selection.empty())
@@ -400,6 +444,10 @@ void TransactionView::contextualMenu(const QPoint &point)
     rebroadcastAction->setEnabled(model->wallet().transactionCanBeRebroadcast(hash));
     copyAddressAction->setEnabled(GUIUtil::hasEntryData(transactionView, 0, TransactionTableModel::AddressRole));
     copyLabelAction->setEnabled(GUIUtil::hasEntryData(transactionView, 0, TransactionTableModel::LabelRole));
+    const bool has_address = GUIUtil::hasEntryData(transactionView, 0, TransactionTableModel::AddressRole);
+    for (QAction* action : thirdPartyTxUrlActions) {
+        if (action && action->property("requiresAddress").toBool()) action->setEnabled(has_address);
+    }
 
     if (index.isValid()) {
         GUIUtil::PopupMenu(contextMenu, transactionView->viewport()->mapToGlobal(point));
@@ -558,6 +606,19 @@ void TransactionView::openThirdPartyTxUrl(QString url)
     QModelIndexList selection = transactionView->selectionModel()->selectedRows(0);
     if(!selection.isEmpty())
          QDesktopServices::openUrl(QUrl::fromUserInput(url.replace("%s", selection.at(0).data(TransactionTableModel::TxHashRole).toString())));
+}
+
+void TransactionView::openThirdPartyAddressUrl(QString url)
+{
+    if(!transactionView || !transactionView->selectionModel())
+        return;
+    QModelIndexList selection = transactionView->selectionModel()->selectedRows(0);
+    if(!selection.isEmpty()) {
+        const QString address = selection.at(0).data(TransactionTableModel::AddressRole).toString();
+        if (!address.isEmpty()) {
+            QDesktopServices::openUrl(QUrl::fromUserInput(ExplorerAddressUrlTemplate(url).replace("%s", address)));
+        }
+    }
 }
 
 QWidget *TransactionView::createDateRangeWidget()

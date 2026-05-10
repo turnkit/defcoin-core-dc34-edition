@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="32" viewBox="0 0 64 32">
+  <text x="4" y="23" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800" letter-spacing="0" fill="#eaf6ff">HD</text>
+  <g transform="rotate(-12 42 16)" fill="none" stroke="#8fcaff" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="33.5" cy="16" rx="5.2" ry="6.5" stroke-width="3"/>
+    <ellipse cx="33.5" cy="16" rx="2.1" ry="2.9" stroke-width="1.5"/>
+    <path d="M38.8 16H51.2" stroke-width="3"/>
+    <path d="M45.4 14.3h6.3" stroke-width="1.1" opacity=".78"/>
+    <path d="M50.9 16v-5.1h3.1v5.1" stroke-width="2.5"/>
+    <path d="M54 16v3.9h-3.9V16" stroke-width="2.5"/>
+  </g>
+  <path d="m53.7 23.8 3.2 2.9 5.1-6.7" fill="none" stroke="#76ffc8" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

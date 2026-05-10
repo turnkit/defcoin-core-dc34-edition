@@ -34,7 +34,7 @@ class MWEBP2PMutatedBlockSubmitBlockTest(BitcoinTestFramework):
             address=wallet.getnewaddress(address_type='mweb'),
             amount=2,
         )
-    
+
     def send_mutated_parent_and_child(self, node, peer, valid_parent, valid_child, description, mutate_inputs, expected_reason):
         self.log.info("Mutate the parent MWEB body without changing its block hash: {}".format(description))
         mutated_parent = copy.deepcopy(valid_parent)

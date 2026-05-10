@@ -332,6 +332,38 @@ bool CAddrMan::Add_(const CAddress& addr, const CNetAddr& source, int64_t nTimeP
     return fNew;
 }
 
+bool CAddrMan::AddAndMarkGood_(const CAddress& addr)
+{
+    if (!addr.IsRoutable()) return false;
+
+    int nId;
+    CAddrInfo* pinfo = Find(addr, &nId);
+    if (!pinfo) {
+        pinfo = Create(addr, addr, &nId);
+        pinfo->nTime = addr.nTime ? addr.nTime : GetAdjustedTime();
+        pinfo->nServices = addr.nServices;
+        ++nNew;
+    } else {
+        if (addr.nTime && (!pinfo->nTime || pinfo->nTime < addr.nTime)) {
+            pinfo->nTime = addr.nTime;
+        }
+        pinfo->nServices = ServiceFlags(pinfo->nServices | addr.nServices);
+    }
+
+    if (!pinfo->fInTried && pinfo->nRefCount == 0) {
+        const int nUBucket = pinfo->GetNewBucket(nKey, addr, m_asmap);
+        const int nUBucketPos = pinfo->GetBucketPosition(nKey, true, nUBucket);
+        ClearNew(nUBucket, nUBucketPos);
+        pinfo->nRefCount = 1;
+        vvNew[nUBucket][nUBucketPos] = nId;
+    }
+
+    // This peer just completed a successful handshake, so it is useful enough
+    // to move into tried even when the tried bucket slot is occupied.
+    Good_(addr, /* test_before_evict */ false, GetAdjustedTime());
+    return true;
+}
+
 void CAddrMan::Attempt_(const CService& addr, bool fCountFailure, int64_t nTime)
 {
     CAddrInfo* pinfo = Find(addr);

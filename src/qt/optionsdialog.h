@@ -12,7 +12,10 @@ class OptionsModel;
 class QValidatedLineEdit;
 
 QT_BEGIN_NAMESPACE
+class QCheckBox;
+class QComboBox;
 class QDataWidgetMapper;
+class QLabel;
 QT_END_NAMESPACE
 
 namespace Ui {
@@ -42,7 +45,9 @@ public:
 
     enum Tab {
         TAB_MAIN,
+        TAB_WALLET,
         TAB_NETWORK,
+        TAB_DISPLAY,
     };
 
     void setModel(OptionsModel *model);
@@ -70,9 +75,15 @@ Q_SIGNALS:
     void proxyIpChecks(QValidatedLineEdit *pUiProxyIp, int nProxyPort);
 
 private:
+    bool validateThirdPartyTxUrlSettings(bool final_validation);
+    void updateThirdPartyTxUrlState();
+
     Ui::OptionsDialog *ui;
     OptionsModel *model;
     QDataWidgetMapper *mapper;
+    QCheckBox* thirdPartyTxUrlsEnabled{nullptr};
+    QComboBox* thirdPartyTxUrlPresets{nullptr};
+    QLabel* thirdPartyTxUrlError{nullptr};
 };
 
 #endif // BITCOIN_QT_OPTIONSDIALOG_H

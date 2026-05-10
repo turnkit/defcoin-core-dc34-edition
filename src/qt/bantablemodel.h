@@ -10,6 +10,8 @@
 #include <memory>
 
 #include <QAbstractTableModel>
+#include <QVariant>
+#include <QVector>
 #include <QStringList>
 
 class BanTablePriv;
@@ -21,6 +23,8 @@ namespace interfaces {
 struct CCombinedBan {
     CSubNet subnet;
     CBanEntry banEntry;
+    QVector<QVariant> displayValues;
+    bool hasDisplayValues{false};
 };
 
 class BannedNodeLessThan
@@ -50,8 +54,40 @@ public:
     void stopAutoRefresh();
 
     enum ColumnIndex {
-        Address = 0,
-        Bantime = 1
+        NetNodeId = 0,
+        Seed = 1,
+        Address = 2,
+        Port = 3,
+        Fqdn = 4,
+        CustomHostname = 5,
+        Version = 6,
+        Services = 7,
+        AvgPing = 8,
+        Ping = 9,
+        Jitter = 10,
+        PingHealth = 11,
+        Sent = 12,
+        Received = 13,
+        Subversion = 14,
+        UserAgentCount = 15,
+        Country = 16,
+        CityState = 17,
+        Permissions = 18,
+        Direction = 19,
+        StartingBlock = 20,
+        SyncedHeaders = 21,
+        SyncedBlocks = 22,
+        ConnectionTime = 23,
+        LastSend = 24,
+        LastReceive = 25,
+        PingWait = 26,
+        MinPing = 27,
+        TimeOffset = 28,
+        MappedAS = 29,
+        ASName = 30,
+        ASHostingCompany = 31,
+        Bantime = 32,
+        ColumnCount = 33,
     };
 
     /** @name Methods overridden from QAbstractTableModel
@@ -66,6 +102,8 @@ public:
     /*@}*/
 
     bool shouldShow();
+    int realRowCount() const;
+    void rememberPeerDisplay(const QString& ip, const QVector<QVariant>& display_values);
 
 public Q_SLOTS:
     void refresh();

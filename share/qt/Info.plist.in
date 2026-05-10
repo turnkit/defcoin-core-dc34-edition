@@ -7,38 +7,48 @@
 
   <key>LSArchitecturePriority</key>
   <array>
+    <string>arm64</string>
     <string>x86_64</string>
   </array>
 
   <key>CFBundleIconFile</key>
-  <string>bitcoin.icns</string>
+  <string>defcoin.icns</string>
 
   <key>CFBundlePackageType</key>
   <string>APPL</string>
 
   <key>NSHumanReadableCopyright</key>
-  <string>@CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_REVISION@.@CLIENT_VERSION_BUILD@, Copyright © 2009-@COPYRIGHT_YEAR@ @COPYRIGHT_HOLDERS_FINAL@</string>
+  <string>Copyright (C) 2014-@COPYRIGHT_YEAR@ The Defcoin Core developers</string>
+
+  <key>NSLocalNetworkUsageDescription</key>
+  <string>Defcoin Core uses local network access only when peer-to-peer networking or local peer discovery is enabled, so it can connect to other Defcoin nodes on your LAN.</string>
 
   <key>CFBundleShortVersionString</key>
-  <string>@CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_REVISION@</string>
+  <string>2026.1</string>
 
   <key>CFBundleVersion</key>
-  <string>@CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_REVISION@</string>
+  <string>2026.1.0</string>
 
   <key>CFBundleSignature</key>
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>Litecoin-Qt</string>
+  <string>Defcoin-Qt</string>
 
   <key>CFBundleName</key>
-  <string>Litecoin-Qt</string>
+  <string>Defcoin Core</string>
+
+  <key>CFBundleDisplayName</key>
+  <string>Defcoin Core</string>
+
+  <key>CFBundleGetInfoString</key>
+  <string>Defcoin Core 2026.1</string>
 
   <key>LSHasLocalizedDisplayName</key>
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>org.litecoin.Litecoin-Qt</string>
+  <string>io.defcoin.Defcoin-Qt</string>
 
   <key>CFBundleURLTypes</key>
   <array>
@@ -46,10 +56,10 @@
       <key>CFBundleTypeRole</key>
       <string>Editor</string>
       <key>CFBundleURLName</key>
-      <string>org.litecoin.LitecoinPayment</string>
+      <string>io.defcoin.DefcoinPayment</string>
       <key>CFBundleURLSchemes</key>
       <array>
-        <string>litecoin</string>
+        <string>defcoin</string>
       </array>
     </dict>
   </array>
@@ -61,7 +71,7 @@
     <string>True</string>
 
   <key>NSRequiresAquaSystemAppearance</key>
-    <string>True</string>
+    <false/>
 
   <key>LSApplicationCategoryType</key>
     <string>public.app-category.finance</string>

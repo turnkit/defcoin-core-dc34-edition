@@ -36,6 +36,10 @@
 #include <algorithm>
 #include <cassert>
 #include <fcntl.h>
+#ifdef MAC_OSX
+#include <pwd.h>
+#include <unistd.h>
+#endif
 #include <sched.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -71,7 +75,7 @@
 // Application startup time (used for uptime calculation)
 const int64_t nStartupTime = GetTime();
 
-const char * const BITCOIN_CONF_FILENAME = "litecoin.conf";
+const char * const BITCOIN_CONF_FILENAME = "defcoin.conf";
 const char * const BITCOIN_SETTINGS_FILENAME = "settings.json";
 
 ArgsManager gArgs;
@@ -631,7 +635,7 @@ static std::string FormatException(const std::exception* pex, const char* pszThr
     char pszModule[MAX_PATH] = "";
     GetModuleFileNameA(nullptr, pszModule, sizeof(pszModule));
 #else
-    const char* pszModule = "litecoin";
+    const char* pszModule = "defcoin";
 #endif
     if (pex)
         return strprintf(
@@ -650,25 +654,34 @@ void PrintExceptionContinue(const std::exception* pex, const char* pszThread)
 
 fs::path GetDefaultDataDir()
 {
-    // Windows: C:\Users\Username\AppData\Roaming\Bitcoin
-    // macOS: ~/Library/Application Support/Bitcoin
-    // Unix-like: ~/.bitcoin
+    // Windows: C:\Users\Username\AppData\Roaming\Defcoin
+    // macOS: ~/Library/Application Support/Defcoin
+    // Unix-like: ~/.defcoin
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "Litecoin";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "Defcoin";
 #else
     fs::path pathRet;
+#ifdef MAC_OSX
+    if (const struct passwd* pwd = getpwuid(getuid())) {
+        pathRet = fs::path(pwd->pw_dir);
+    }
+    if (pathRet.empty()) {
+        char* pszHome = getenv("HOME");
+        if (pszHome == nullptr || strlen(pszHome) == 0) {
+            pathRet = fs::path("/");
+        } else {
+            pathRet = fs::path(pszHome);
+        }
+    }
+    return pathRet / "Library/Application Support/Defcoin";
+#else
     char* pszHome = getenv("HOME");
     if (pszHome == nullptr || strlen(pszHome) == 0)
         pathRet = fs::path("/");
     else
         pathRet = fs::path(pszHome);
-#ifdef MAC_OSX
-    // macOS
-    return pathRet / "Library/Application Support/Litecoin";
-#else
-    // Unix-like
-    return pathRet / ".litecoin";
+    return pathRet / ".defcoin";
 #endif
 #endif
 }

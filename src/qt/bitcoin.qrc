@@ -1,7 +1,10 @@
 <!DOCTYPE RCC><RCC version="1.0">
     <qresource prefix="/icons">
-        <file alias="bitcoin">res/icons/bitcoin.png</file>
-        <file alias="litecoin_splash">res/icons/litecoin_splash.png</file>
+        <file alias="bitcoin">res/icons/defcoin.png</file>
+        <file alias="defcoin">res/icons/defcoin.png</file>
+        <file alias="defcoin_34">res/icons/defcoin_34.png</file>
+        <file alias="defcoin_splash">res/icons/defcoin_splash.png</file>
+        <file alias="defcoin_splash_34">res/icons/defcoin_splash_34.png</file>
         <file alias="address-book">res/icons/address-book.png</file>
         <file alias="send">res/icons/send.png</file>
         <file alias="connect_0">res/icons/connect0.png</file>
@@ -27,22 +30,36 @@
         <file alias="edit">res/icons/edit.png</file>
         <file alias="history">res/icons/history.png</file>
         <file alias="overview">res/icons/overview.png</file>
+        <file alias="node">res/icons/node.png</file>
+        <file alias="settings">res/icons/settings.png</file>
+        <file alias="mask_values_visible">res/icons/mask_values_visible.png</file>
+        <file alias="mask_values_hidden">res/icons/mask_values_hidden.png</file>
+        <file alias="dropdown_arrow">res/icons/dropdown_arrow.png</file>
+        <file alias="block_explorer_link">res/icons/block_explorer_link.svg</file>
+        <file alias="theme_auto">res/icons/theme_auto.png</file>
+        <file alias="theme_light">res/icons/theme_light.png</file>
+        <file alias="theme_dark">res/icons/theme_dark.png</file>
+        <file alias="theme_modern">res/icons/theme_modern.png</file>
+        <file alias="theme_34">res/icons/theme_34.png</file>
         <file alias="export">res/icons/export.png</file>
         <file alias="synced">res/icons/synced.png</file>
+        <file alias="syncing">res/icons/syncing.png</file>
         <file alias="remove">res/icons/remove.png</file>
         <file alias="tx_mined">res/icons/tx_mined.png</file>
         <file alias="tx_input">res/icons/tx_input.png</file>
         <file alias="tx_output">res/icons/tx_output.png</file>
         <file alias="tx_inout">res/icons/tx_inout.png</file>
-        <file alias="lock_closed">res/icons/lock_closed.png</file>
-        <file alias="lock_open">res/icons/lock_open.png</file>
         <file alias="warning">res/icons/warning.png</file>
         <file alias="fontbigger">res/icons/fontbigger.png</file>
         <file alias="fontsmaller">res/icons/fontsmaller.png</file>
         <file alias="prompticon">res/icons/chevron.png</file>
         <file alias="transaction_abandoned">res/icons/transaction_abandoned.png</file>
+        <file alias="lock_closed">res/icons/lock_closed.png</file>
+        <file alias="lock_open">res/icons/lock_open.png</file>
         <file alias="hd_enabled">res/icons/hd_enabled.png</file>
         <file alias="hd_disabled">res/icons/hd_disabled.png</file>
+        <file alias="network_connected">res/icons/network_connected.png</file>
+        <file alias="network_isolated">res/icons/network_isolated.png</file>
         <file alias="network_disabled">res/icons/network_disabled.png</file>
         <file alias="proxy">res/icons/proxy.png</file>
     </qresource>
@@ -83,5 +100,14 @@
         <file alias="spinner-033">res/animation/spinner-033.png</file>
         <file alias="spinner-034">res/animation/spinner-034.png</file>
         <file alias="spinner-035">res/animation/spinner-035.png</file>
+    </qresource>
+    <qresource prefix="/geo">
+        <file alias="black_marble_2016_global_7km_print">res/geo/black_marble_2016_global_7km_print.jpg</file>
+        <file alias="black_marble_2016_global_7km">res/geo/black_marble_2016_global_7km.png</file>
+        <file alias="black_marble_2016_3km">res/geo/black_marble_2016_3km.jpg</file>
+        <file alias="blue_marble_200405_3x5400x2700">res/geo/blue_marble_200405_3x5400x2700.png</file>
+        <file alias="blue_marble_200405_3x5400x2700_jpg">res/geo/blue_marble_200405_3x5400x2700.jpg</file>
+        <file alias="country_borders_110m">res/geo/ne_110m_admin_0_boundary_lines_land.geojson</file>
+        <file alias="populated_places_110m">res/geo/ne_110m_populated_places_simple.geojson</file>
     </qresource>
 </RCC>

@@ -52,7 +52,7 @@
         </size>
        </property>
        <property name="pixmap">
-        <pixmap resource="../bitcoin.qrc">:/icons/bitcoin</pixmap>
+        <pixmap resource="../bitcoin.qrc">:/icons/defcoin</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -77,8 +77,11 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QTextEdit" name="helpMessage">
+      <widget class="QTextBrowser" name="helpMessage">
        <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="openExternalLinks">
         <bool>true</bool>
        </property>
       </widget>

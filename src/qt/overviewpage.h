@@ -21,6 +21,7 @@ namespace Ui {
 }
 
 QT_BEGIN_NAMESPACE
+class QComboBox;
 class QModelIndex;
 QT_END_NAMESPACE
 
@@ -51,6 +52,7 @@ private:
     WalletModel *walletModel;
     interfaces::WalletBalances m_balances;
     bool m_privacy{false};
+    QComboBox* m_unit_selector = nullptr;
 
     TxViewDelegate *txdelegate;
     std::unique_ptr<TransactionFilterProxy> filter;

@@ -29,9 +29,11 @@
 #include <txmempool.h>
 #include <util/check.h> // For NDEBUG compile time check
 #include <util/strencodings.h>
+#include <util/string.h>
 #include <util/system.h>
 #include <validation.h>
 
+#include <atomic>
 #include <memory>
 #include <typeinfo>
 
@@ -178,8 +180,40 @@ std::map<uint256, std::map<uint256, COrphanTx>::iterator> g_orphans_by_wtxid GUA
 
 void EraseOrphansFor(NodeId peer);
 
+static std::atomic_bool g_only_defcoin_user_agents{DEFAULT_DEFCOIN_USER_AGENT_FILTER};
+
+void SetOnlyDefcoinUserAgents(bool enabled)
+{
+    g_only_defcoin_user_agents.store(enabled, std::memory_order_relaxed);
+}
+
+bool GetOnlyDefcoinUserAgents()
+{
+    return g_only_defcoin_user_agents.load(std::memory_order_relaxed);
+}
+
 // Internal stuff
 namespace {
+    bool IsDefcoinPrefixedUserAgent(const std::string& clean_subver)
+    {
+        std::string normalized = clean_subver;
+        while (!normalized.empty() && normalized.front() == '/') {
+            normalized.erase(normalized.begin());
+        }
+        return ToLower(normalized).rfind("defcoin", 0) == 0;
+    }
+
+    bool IsDefcoinMainnet()
+    {
+        return Params().NetworkIDString() == CBaseChainParams::MAIN;
+    }
+
+    bool IsDefcoinPreferredPort(uint16_t port)
+    {
+        static constexpr uint16_t DEFCOIN_ALT_PORT = 10332;
+        return port == Params().GetDefaultPort() || port == DEFCOIN_ALT_PORT;
+    }
+
     /** Number of nodes with fSyncStarted. */
     int nSyncStarted GUARDED_BY(cs_main) = 0;
 
@@ -2635,6 +2669,18 @@ void PeerManager::ProcessMessage(CNode& pfrom, const std::string& msg_type, CDat
             std::string strSubVer;
             vRecv >> LIMITED_STRING(strSubVer, MAX_SUBVERSION_LENGTH);
             cleanSubVer = SanitizeString(strSubVer);
+            if (GetOnlyDefcoinUserAgents() && !IsDefcoinPrefixedUserAgent(cleanSubVer)) {
+                if (pfrom.IsAddrFetchConn()) {
+                    LogPrintf("peer=%d user agent '%s' is not Defcoin-prefixed on addr-fetch connection; allowing address fetch before disconnect\n", pfrom.GetId(), cleanSubVer);
+                } else {
+                    LogPrintf("peer=%d user agent '%s' is not Defcoin-prefixed on %s connection; disconnecting\n", pfrom.GetId(), cleanSubVer, pfrom.ConnectionTypeAsString());
+                    if (!pfrom.IsInboundConn()) {
+                        m_connman.SetTryNewOutboundPeer(true);
+                    }
+                    pfrom.fDisconnect = true;
+                    return;
+                }
+            }
         }
         if (!vRecv.empty()) {
             vRecv >> nStartingHeight;
@@ -2765,6 +2811,16 @@ void PeerManager::ProcessMessage(CNode& pfrom, const std::string& msg_type, CDat
             // This moves an address from New to Tried table in Addrman,
             // resolves tried-table collisions, etc.
             m_connman.MarkAddressGood(pfrom.addr);
+
+            LogPrint(BCLog::NET, "Defcoin successful peer addrman retention check: addr=%s main=%d blockonly=%d routable=%d port=%u preferred=%d\n",
+                     pfrom.addr.ToString(), IsDefcoinMainnet(), pfrom.IsBlockOnlyConn(), pfrom.addr.IsRoutable(), pfrom.addr.GetPort(), IsDefcoinPreferredPort(pfrom.addr.GetPort()));
+            if (IsDefcoinMainnet() && !pfrom.IsBlockOnlyConn() && pfrom.addr.IsRoutable() && IsDefcoinPreferredPort(pfrom.addr.GetPort())) {
+                CAddress connected_addr = pfrom.addr;
+                connected_addr.nServices = pfrom.nServices;
+                connected_addr.nTime = GetAdjustedTime();
+                const bool added = m_connman.AddAndMarkAddressGood(connected_addr);
+                LogPrint(BCLog::NET, "Defcoin successful peer addrman retention: addr=%s added=%d services=%s\n", connected_addr.ToString(), added, Join(serviceFlagsToStr(connected_addr.nServices), "|"));
+            }
         }
 
         std::string remoteAddr;
@@ -2889,6 +2945,15 @@ void PeerManager::ProcessMessage(CNode& pfrom, const std::string& msg_type, CDat
         std::vector<CAddress> vAddr;
 
         s >> vAddr;
+        const bool defcoin_mainnet = Params().NetworkIDString() == CBaseChainParams::MAIN;
+        if (defcoin_mainnet) {
+            for (const CAddress& addr : vAddr) {
+                if (addr.GetPort() == 10332 || addr.IsIPv6()) {
+                    LogPrint(BCLog::NET, "Defcoin address relay candidate from peer=%d via %s: %s services=%016x\n",
+                             pfrom.GetId(), SanitizeString(msg_type), addr.ToString(), static_cast<uint64_t>(addr.nServices));
+                }
+            }
+        }
 
         if (!pfrom.RelayAddrsWithConn()) {
             return;
@@ -2935,13 +3000,23 @@ void PeerManager::ProcessMessage(CNode& pfrom, const std::string& msg_type, CDat
             // We only bother storing full nodes, though this may include
             // things which we would not make an outbound connection to, in
             // part because we may make feeler connections to them.
-            if (!MayHaveUsefulAddressDB(addr.nServices) && !HasAllDesirableServiceFlags(addr.nServices))
+            const bool watched_defcoin_addr = defcoin_mainnet && (addr.GetPort() == 10332 || addr.IsIPv6());
+            if (!MayHaveUsefulAddressDB(addr.nServices) && !HasAllDesirableServiceFlags(addr.nServices)) {
+                if (watched_defcoin_addr) {
+                    LogPrint(BCLog::NET, "Defcoin address relay rejected for services: %s services=%016x peer=%d\n",
+                             addr.ToString(), static_cast<uint64_t>(addr.nServices), pfrom.GetId());
+                }
                 continue;
+            }
 
             if (addr.nTime <= 100000000 || addr.nTime > nNow + 10 * 60)
                 addr.nTime = nNow - 5 * 24 * 60 * 60;
             pfrom.AddAddressKnown(addr);
             if (m_banman && (m_banman->IsDiscouraged(addr) || m_banman->IsBanned(addr))) {
+                if (watched_defcoin_addr) {
+                    LogPrint(BCLog::NET, "Defcoin address relay ignored banned/discouraged address: %s peer=%d\n",
+                             addr.ToString(), pfrom.GetId());
+                }
                 // Do not process banned/discouraged addresses beyond remembering we received them
                 continue;
             }
@@ -2953,8 +3028,16 @@ void PeerManager::ProcessMessage(CNode& pfrom, const std::string& msg_type, CDat
                 RelayAddress(addr, fReachable, m_connman);
             }
             // Do not store addresses outside our network
-            if (fReachable)
+            if (fReachable) {
+                if (watched_defcoin_addr) {
+                    LogPrint(BCLog::NET, "Defcoin address relay accepted into addrman batch: %s peer=%d\n",
+                             addr.ToString(), pfrom.GetId());
+                }
                 vAddrOk.push_back(addr);
+            } else if (watched_defcoin_addr) {
+                LogPrint(BCLog::NET, "Defcoin address relay not reachable from this node: %s peer=%d\n",
+                         addr.ToString(), pfrom.GetId());
+            }
         }
         peer->m_addr_processed += num_proc;
         peer->m_addr_rate_limited += num_rate_limit;

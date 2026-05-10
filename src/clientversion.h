@@ -9,6 +9,10 @@
 #include <config/bitcoin-config.h>
 #endif //HAVE_CONFIG_H
 
+#ifndef ENABLE_DEFCOIN_FUN_UI
+#define ENABLE_DEFCOIN_FUN_UI 0
+#endif
+
 // Check that required client information is defined
 #if !defined(CLIENT_VERSION_MAJOR) || !defined(CLIENT_VERSION_MINOR) || !defined(CLIENT_VERSION_REVISION) || !defined(CLIENT_VERSION_BUILD) || !defined(CLIENT_VERSION_IS_RELEASE) || !defined(COPYRIGHT_YEAR)
 #error Client version information missing: version is not defined by bitcoin-config.h or in any other way
@@ -23,6 +27,20 @@
 
 //! Copyright string used in Windows .rc files
 #define COPYRIGHT_STR "2009-" STRINGIZE(COPYRIGHT_YEAR) " " COPYRIGHT_HOLDERS_FINAL
+
+//! Public Defcoin release identity. Keep this separate from CLIENT_VERSION,
+//! which is still the protocol/client integer used for wire compatibility.
+#define DEFCOIN_RELEASE_VERSION_STR "2026.1"
+#define DEFCOIN_RELEASE_CODENAME_STR "Token Jester"
+#if ENABLE_DEFCOIN_FUN_UI
+#define DEFCOIN_PRODUCT_NAME_STR "Defcoin Core DC34 Edition"
+#define DEFCOIN_OS_DISPLAY_VERSION_STR DEFCOIN_RELEASE_VERSION_STR " DC34 Edition"
+#define DEFCOIN_BUILD_VARIANT_SUFFIX_STR "-dc34"
+#else
+#define DEFCOIN_PRODUCT_NAME_STR "Defcoin Core"
+#define DEFCOIN_OS_DISPLAY_VERSION_STR DEFCOIN_RELEASE_VERSION_STR
+#define DEFCOIN_BUILD_VARIANT_SUFFIX_STR ""
+#endif
 
 /**
  * bitcoind-res.rc includes this file, but it cannot cope with real c++ code.
@@ -43,9 +61,16 @@ static const int CLIENT_VERSION =
 
 extern const std::string CLIENT_NAME;
 extern const std::string CLIENT_BUILD;
+extern const std::string DEFCOIN_RELEASE_VERSION;
+extern const std::string DEFCOIN_RELEASE_CODENAME;
+extern const std::string DEFCOIN_PRODUCT_NAME;
+extern const std::string DEFCOIN_OS_DISPLAY_VERSION;
 
 
 std::string FormatFullVersion();
+std::string FormatReleaseCodename();
+std::string FormatProductName();
+std::string FormatOSDisplayVersion();
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments);
 
 #endif // WINDRES_PREPROC

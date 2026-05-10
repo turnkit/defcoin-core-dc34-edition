@@ -32,6 +32,8 @@ private Q_SLOTS:
     void updateDisplayUnit();
 
 private:
+    void addExplorerLinkRow();
+
     Ui::ReceiveRequestDialog *ui;
     WalletModel *model;
     SendCoinsRecipient info;

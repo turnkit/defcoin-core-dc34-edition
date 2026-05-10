@@ -52,6 +52,7 @@ class QComboBox;
 class QMenu;
 class QProgressBar;
 class QProgressDialog;
+class QToolButton;
 QT_END_NAMESPACE
 
 namespace GUIUtil {
@@ -125,6 +126,7 @@ private:
     GUIUtil::ClickableLabel* labelProxyIcon = nullptr;
     GUIUtil::ClickableLabel* connectionsControl = nullptr;
     GUIUtil::ClickableLabel* labelBlocksIcon = nullptr;
+    QLabel* m_network_sync_status_label = nullptr;
     QLabel* progressBarLabel = nullptr;
     GUIUtil::ClickableProgressBar* progressBar = nullptr;
     QProgressDialog* progressDialog = nullptr;
@@ -143,6 +145,7 @@ private:
     QAction* m_load_psbt_action = nullptr;
     QAction* m_load_psbt_clipboard_action = nullptr;
     QAction* aboutAction = nullptr;
+    QAction* walletHelpAction = nullptr;
     QAction* receiveCoinsAction = nullptr;
     QAction* receiveCoinsMenuAction = nullptr;
     QAction* optionsAction = nullptr;
@@ -152,6 +155,8 @@ private:
     QAction* changePassphraseAction = nullptr;
     QAction* aboutQtAction = nullptr;
     QAction* openRPCConsoleAction = nullptr;
+    QAction* m_network_toggle_action = nullptr;
+    QAction* m_theme_cycle_action = nullptr;
     QAction* openAction = nullptr;
     QAction* showHelpMessageAction = nullptr;
     QAction* m_create_wallet_action{nullptr};
@@ -165,6 +170,13 @@ private:
 
     QLabel *m_wallet_selector_label = nullptr;
     QComboBox* m_wallet_selector = nullptr;
+    QToolButton* m_settings_button = nullptr;
+    QToolButton* m_theme_button = nullptr;
+    QToolButton* m_mask_values_button = nullptr;
+    QWidget* m_main_text_controls = nullptr;
+    QMenu* m_settings_theme_menu = nullptr;
+    QMenu* m_theme_menu = nullptr;
+    int m_main_window_font_size = 0;
 
     QSystemTrayIcon* trayIcon = nullptr;
     const std::unique_ptr<QMenu> trayIconMenu;
@@ -180,6 +192,8 @@ private:
     /** Keep track of previous number of blocks, to detect progress */
     int prevBlocks = 0;
     int spinnerFrame = 0;
+    bool m_block_sync_up_to_date = false;
+    bool m_ui_capture_scheduled = false;
 
     const PlatformStyle *platformStyle;
     const NetworkStyle* const m_network_style;
@@ -205,9 +219,21 @@ private:
     void updateNetworkState();
 
     void updateHeadersSyncProgressLabel();
+    void maybeScheduleUiCapture();
 
     /** Open the OptionsDialog on the specified tab index */
     void openOptionsDialogWithTab(OptionsDialog::Tab tab);
+    void setAppearanceTheme(const QString& theme);
+    void cycleAppearanceTheme();
+    void updateAppearanceThemeButton();
+    void updateMaskValuesIcon();
+    void updateThemedIcons();
+    void rebuildThemeMenus();
+    QWidget* createMainTextControls();
+    void adjustMainWindowFontSize(int delta);
+    void setMainWindowFontSize(int size);
+    void applyMainWindowFontSize();
+    void updateMainWindowFontDependentLayout(const QFont& font);
 
 Q_SIGNALS:
     /** Signal raised when a URI was entered or dragged to the GUI */
@@ -221,6 +247,10 @@ public Q_SLOTS:
     void setNumConnections(int count);
     /** Set network state shown in the UI */
     void setNetworkActive(bool networkActive);
+    /** Reload text-size display settings after Preferences changes. */
+    void refreshTextSizeSettings();
+    /** Apply Overview privacy masking after Preferences changes. */
+    void applyPrivacySetting(bool privacy);
     /** Set number of blocks and last block date shown in the UI */
     void setNumBlocks(int count, const QDateTime& blockDate, double nVerificationProgress, bool headers, SynchronizationState sync_state);
 
@@ -297,13 +327,12 @@ public Q_SLOTS:
     void showDebugWindowActivateConsole();
     /** Show help message dialog */
     void showHelpMessageClicked();
-#ifndef Q_OS_MAC
+    /** Show wallet help index */
+    void showWalletHelpClicked();
     /** Handle tray icon clicked */
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
-#else
     /** Handle macOS Dock icon clicked */
     void macosDockIconActivated();
-#endif
 
     /** Show window if hidden, unminimize when minimized, rise when obscured or show if hidden and fToggleHidden is true */
     void showNormalIfMinimized() { showNormalIfMinimized(false); }

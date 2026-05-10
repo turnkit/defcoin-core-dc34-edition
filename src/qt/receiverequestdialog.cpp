@@ -12,11 +12,28 @@
 #include <qt/walletmodel.h>
 
 #include <QDialog>
+#include <QDesktopServices>
+#include <QHBoxLayout>
+#include <QIcon>
+#include <QLabel>
+#include <QSettings>
 #include <QString>
+#include <QUrl>
 
 #if defined(HAVE_CONFIG_H)
 #include <config/bitcoin-config.h> /* for USE_QRCODE */
 #endif
+
+namespace {
+QString ExplorerAddressUrlTemplate(QString url)
+{
+    QString address_url = url;
+    address_url.replace(QStringLiteral("/tx/%s"), QStringLiteral("/address/%s"), Qt::CaseInsensitive);
+    address_url.replace(QStringLiteral("/transaction/%s"), QStringLiteral("/address/%s"), Qt::CaseInsensitive);
+    address_url.replace(QStringLiteral("/transactions/%s"), QStringLiteral("/address/%s"), Qt::CaseInsensitive);
+    return address_url;
+}
+}
 
 ReceiveRequestDialog::ReceiveRequestDialog(QWidget *parent) :
     QDialog(parent),
@@ -89,6 +106,8 @@ void ReceiveRequestDialog::setInfo(const SendCoinsRecipient &_info)
         ui->wallet_tag->hide();
         ui->wallet_content->hide();
     }
+
+    addExplorerLinkRow();
 }
 
 void ReceiveRequestDialog::updateDisplayUnit()
@@ -105,4 +124,45 @@ void ReceiveRequestDialog::on_btnCopyURI_clicked()
 void ReceiveRequestDialog::on_btnCopyAddress_clicked()
 {
     GUIUtil::setClipboard(info.address);
+}
+
+void ReceiveRequestDialog::addExplorerLinkRow()
+{
+    if (!QSettings().value(QStringLiteral("ThirdPartyTxUrlsEnabled"), false).toBool()) return;
+    if (info.address.isEmpty()) return;
+
+    const QStringList urls = QSettings().value(QStringLiteral("strThirdPartyTxUrls"), QString()).toString().split(QStringLiteral("|"), QString::SkipEmptyParts);
+    for (const QString& raw_url : urls) {
+        const QString url = raw_url.trimmed();
+        const QString host = QUrl(url, QUrl::StrictMode).host();
+        if (host.isEmpty() || !url.contains(QStringLiteral("%s"))) continue;
+
+        const QString address_url = ExplorerAddressUrlTemplate(url);
+        const QString resolved_url = QString(address_url).replace(QStringLiteral("%s"), info.address);
+        QWidget* row = new QWidget(this);
+        QHBoxLayout* layout = new QHBoxLayout(row);
+        layout->setContentsMargins(0, 4, 0, 6);
+        layout->setSpacing(8);
+
+        QLabel* icon = new QLabel(row);
+        icon->setPixmap(QIcon(QStringLiteral(":/icons/block_explorer_link")).pixmap(18, 18));
+        icon->setFixedWidth(22);
+        icon->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+
+        QLabel* link = new QLabel(row);
+        link->setTextFormat(Qt::RichText);
+        link->setTextInteractionFlags(Qt::LinksAccessibleByMouse | Qt::TextBrowserInteraction);
+        link->setOpenExternalLinks(false);
+        link->setWordWrap(true);
+        link->setText(tr("Use %1 block explorer to open:<br>Wallet Address: <a href=\"%2\">%3</a>")
+            .arg(host.toHtmlEscaped(), resolved_url.toHtmlEscaped(), info.address.toHtmlEscaped()));
+        connect(link, &QLabel::linkActivated, this, [](const QString& link_url) {
+            QDesktopServices::openUrl(QUrl::fromUserInput(link_url));
+        });
+
+        layout->addWidget(icon);
+        layout->addWidget(link, 1);
+        ui->gridLayout->addWidget(row, 8, 0, 1, 2);
+        return;
+    }
 }

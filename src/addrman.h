@@ -261,6 +261,9 @@ protected:
     //! Add an entry to the "new" table.
     bool Add_(const CAddress &addr, const CNetAddr& source, int64_t nTimePenalty) EXCLUSIVE_LOCKS_REQUIRED(cs);
 
+    //! Add an entry if needed and mark it good after a successful connection.
+    bool AddAndMarkGood_(const CAddress& addr) EXCLUSIVE_LOCKS_REQUIRED(cs);
+
     //! Mark an entry as attempted to connect.
     void Attempt_(const CService &addr, bool fCountFailure, int64_t nTime) EXCLUSIVE_LOCKS_REQUIRED(cs);
 
@@ -643,6 +646,19 @@ public:
         Check();
         Good_(addr, test_before_evict, nTime);
         Check();
+    }
+
+    //! Add an entry if needed and mark it accessible after a successful connection.
+    bool AddAndMarkGood(const CAddress& addr)
+    {
+        LOCK(cs);
+        Check();
+        const bool ret = AddAndMarkGood_(addr);
+        Check();
+        if (ret) {
+            LogPrint(BCLog::ADDRMAN, "Added and marked good %s: %i tried, %i new\n", addr.ToStringIPPort(), nTried, nNew);
+        }
+        return ret;
     }
 
     //! Mark an entry as connection attempted to.
