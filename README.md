@@ -1,14 +1,20 @@
-Defcoin Core
-============
+Defcoin Core DC34 Edition
+=========================
 
-Defcoin Core is a full node and wallet implementation for the Defcoin network.
-This release line is based on Litecoin Core v0.21.5.5 source and carries the
-Defcoin chain, seed, wallet, branding, and packaging changes needed for native
-Defcoin builds.
+> **Recommended wallet:** the current official recommended Defcoin wallet is
+> **Defcoin Core Nu** at
+> [github.com/DefcoinCore/Defcoin-Core-Nu](https://github.com/DefcoinCore/Defcoin-Core-Nu).
+> Use that repository for the cleanest current desktop wallet release.
 
-The current development release identity is `2026.1`, codename `Token Jester`.
-Treat the repository as release-candidate work until the GitHub publication
-checklist and mainnet wallet compatibility checks are complete.
+Defcoin Core DC34 Edition is a Turnkit-maintained experimental release line for
+classic Defcoin-style UI/UX work. Its focus is themeable and moddable desktop
+presentation: UI skins, splash screens, About screens, icon sets, colors, layout
+experiments, and nostalgia-oriented interface details while keeping Defcoin
+chain compatibility and release metadata current.
+
+This codebase is a full node and wallet implementation for the Defcoin network.
+It is based on Litecoin Core v0.21.5.5 source and carries the Defcoin chain,
+seed, wallet, branding, and packaging changes needed for native Defcoin builds.
 
 Key network facts
 -----------------
