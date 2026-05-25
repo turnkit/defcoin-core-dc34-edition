@@ -10,13 +10,13 @@ publication.
 Target public repository:
 
 ```text
-turnkit/defcoin-core
+turnkit/defcoin-core-dc34-edition
 ```
 
 Intended fork relationship:
 
 ```text
-litecoin-project/litecoin -> turnkit/defcoin-core
+litecoin-project/litecoin -> turnkit/defcoin-core-dc34-edition
 ```
 
 Preferred public history:

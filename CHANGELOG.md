@@ -118,7 +118,7 @@ current Litecoin Core v0.21.5.4 source.
   outside the public repository so a clone contains only files needed for a
   functional build.
 - The current DMG asset and checksum file are published at
-  https://github.com/turnkit/defcoin-core/releases/tag/v0.21.5.4-defcoin.20260429.
+  https://github.com/turnkit/defcoin-core-dc34-edition/releases/tag/v0.21.5.4-defcoin.20260429.
 
 ### Deferred
 

@@ -6,7 +6,7 @@ Defcoin Core DC34 Edition
 > [github.com/DefcoinCore/Defcoin-Core-Nu](https://github.com/DefcoinCore/Defcoin-Core-Nu).
 > Use that repository for the cleanest current desktop wallet release.
 
-Defcoin Core DC34 Edition is a Turnkit-maintained experimental release line for
+Defcoin Core DC34 Edition is a turnkit-maintained experimental release line for
 classic Defcoin-style UI/UX work. Its focus is themeable and moddable desktop
 presentation: UI skins, splash screens, About screens, icon sets, colors, layout
 experiments, and nostalgia-oriented interface details while keeping Defcoin

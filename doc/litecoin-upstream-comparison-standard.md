@@ -73,7 +73,7 @@ remain a GitHub fork of `litecoin-project/litecoin`, then the sanitized Defcoin
 Core standard build should be pushed into that fork. The public history should
 contain only build-essential source, documentation, and packaging assets.
 
-`turnkit/defcoin-core` was checked on 2026-05-04 and is configured locally as
+`turnkit/defcoin-core-dc34-edition` was checked on 2026-05-04 and is configured locally as
 the Defcoin remote. Its upload/push step remains intentionally gated on
 explicit approval.
 

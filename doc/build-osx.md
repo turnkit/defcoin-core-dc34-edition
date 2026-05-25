@@ -76,8 +76,8 @@ Apple Silicon path below uses Homebrew Qt 5, Berkeley DB 4.8, libevent, fmt,
 and `boost@1.85`.
 
 ```shell
-git clone https://github.com/turnkit/defcoin-core.git
-cd defcoin-core
+git clone https://github.com/turnkit/defcoin-core-dc34-edition.git
+cd defcoin-core-dc34-edition
 
 brew install automake libtool pkg-config python libevent qrencode fmt sqlite berkeley-db@4 qt@5 boost@1.85
 
@@ -183,8 +183,8 @@ Defcoin-Core-v2026.1-macOS-AppleSilicon.dmg
 
 1. Clone the Defcoin Core source code:
     ```shell
-    git clone https://github.com/turnkit/defcoin-core
-    cd defcoin-core
+    git clone https://github.com/turnkit/defcoin-core-dc34-edition
+    cd defcoin-core-dc34-edition
     ```
 
 2.  Build Defcoin Core:
